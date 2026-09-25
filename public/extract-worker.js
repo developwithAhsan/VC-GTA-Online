@@ -125,7 +125,7 @@ function flattenChunks(chunks, totalLen) {
 // ── Core extraction from a ReadableStream ────────────────────────────────────
 // estimatedDecompBytes is used for extraction progress (0 = unknown).
 
-async function extractFromStream(sourceStream, estimatedDecompBytes) {
+async function extractFromStream(sourceStream, estimatedDecompBytes, reportExtractionProgress = true) {
     const ESTIMATED = estimatedDecompBytes || (880 * 1024 * 1024);
     let bytesOut = 0;
 
@@ -210,8 +210,10 @@ async function extractFromStream(sourceStream, estimatedDecompBytes) {
                     await currentWritable.close();
                     currentWritable = null;
                     filesDone++;
-                    const pct = 65 + Math.min(Math.round((bytesOut / ESTIMATED) * 34), 34);
-                    sendProgress({ type: 'progress', phase: 'extracting', pct, done: filesDone, total: 0, file: currentFileName });
+                    if (reportExtractionProgress) {
+                        const pct = 65 + Math.min(Math.round((bytesOut / ESTIMATED) * 34), 34);
+                        sendProgress({ type: 'progress', phase: 'extracting', pct, done: filesDone, total: 0, file: currentFileName });
+                    }
                     state = 'HEADER';
                 }
 
@@ -336,7 +338,7 @@ async function runStreamingDownload(url) {
     const trackedStream = response.body.pipeThrough(new TransformStream({
         transform(chunk, controller) {
             loaded += chunk.byteLength;
-            const pct = total > 0 ? Math.min(Math.round((loaded / total) * 65), 65) : 0;
+            const pct = total > 0 ? Math.min(Math.round((loaded / total) * 99), 99) : 0;
             sendProgress({
                 type: 'progress',
                 phase: 'downloading',
@@ -349,7 +351,7 @@ async function runStreamingDownload(url) {
         }
     }));
 
-    await extractFromStream(trackedStream, 0);
+    await extractFromStream(trackedStream, 0, false);
 }
 
 // MODE B: download to OPFS temp file in 32 MB chunks, then extract.

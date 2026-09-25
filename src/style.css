@@ -3165,3 +3165,10 @@ body.vc-tool-open #setup-progress:not(.hidden) {
   }
 }
 
+
+
+/* Homepage-only Discord widget: hidden during game loading and gameplay. */
+body.vc-game-shell-active .vc-discord-floating,
+body.vc-game-shell-active .vc-discord-widget {
+  display: none !important;
+}

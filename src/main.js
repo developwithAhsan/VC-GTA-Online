@@ -359,6 +359,7 @@ async function initSetupFlow() {
     progress.classList.remove("hidden");
     if (progressTitle) progressTitle.textContent = "LOADING...";
     progressLabel.textContent = "Preparing game files…";
+    displayedProgressPct = 0;
     progressPercent.textContent = "0%";
     progressBar.style.width = "0%";
     if (progressFile) {
@@ -385,6 +386,7 @@ async function initSetupFlow() {
 
     let downloadStartTime = null;
     let lastPhase = null;
+    let displayedProgressPct = 0;
 
     const onInstallError = (message) => {
       if (tipInterval) clearInterval(tipInterval);
@@ -407,8 +409,10 @@ async function initSetupFlow() {
         const msg = event.data;
 
         if (msg.type === "progress") {
-          progressBar.style.width = `${msg.pct}%`;
-          progressPercent.textContent = `${Math.round(msg.pct)}%`;
+          const incomingPct = Number.isFinite(Number(msg.pct)) ? Number(msg.pct) : 0;
+          displayedProgressPct = Math.max(displayedProgressPct, Math.min(99, Math.max(0, incomingPct)));
+          progressBar.style.width = `${displayedProgressPct}%`;
+          progressPercent.textContent = `${Math.round(displayedProgressPct)}%`;
 
           if (progressTitle) progressTitle.textContent = "LOADING...";
           progressLabel.textContent = "Preparing game files…";

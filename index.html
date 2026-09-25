@@ -253,12 +253,13 @@
                 </div>
               </div>
               <p><strong>GTA Browser</strong> is built around a browser-first Vice City experience: open the site, complete the one-time setup, and return later without installing a desktop launcher. The game runtime is delivered through WebAssembly, while the surrounding web app handles storage, saves, touch input, fullscreen controls, and troubleshooting.</p>
-              <p>On the first setup, the browser downloads the required game data and extracts it into the Origin Private File System (OPFS). The download is roughly 701 MB, so the first setup depends on your connection speed. Once the files are stored and verified, later visits can reuse the local copy instead of repeating the full setup. Clearing browser site data will also clear that local game cache.</p>
+              <p>On the first setup, the browser downloads the required game data and extracts it into the Origin Private File System (OPFS). The download is roughly 701 MB, so the first setup depends on your connection speed. Once the files are stored and verified, later visits can reuse the local copy instead of repeating the full setup. The site also keeps an offline-capable app shell, so a completed local installation can reopen and play from browser storage without an internet connection. Clearing browser site data will also clear that local game cache.</p>
               <p>The page includes tools designed specifically for browser play. The <strong>Save Manager</strong> can import and export compatible <code>.b</code> save files, while the <strong>Mod Manager</strong> gives you a controlled way to work with custom files and backups. Desktop players can use keyboard, mouse, or a supported gamepad; mobile players get on-screen touch controls that adapt to the game state.</p>
               <p>For stable classic-game physics, the built-in frame-rate control lets you cap the game at 30 FPS. Fullscreen mode, local save persistence, cheat controls, download progress, extraction status, and recovery messages are all available from the same interface so you can diagnose setup issues without leaving the page.</p>
               <p><strong>What GTA Browser adds around the game:</strong></p>
               <ul>
                 <li><strong>One-time local setup:</strong> Game data is stored in OPFS so repeat visits can start from local browser storage.</li>
+                <li><strong>Offline play after setup:</strong> After the full game and offline app shell are cached once, GTA Browser can reopen and launch the locally stored game without an internet connection. Clearing browser site data removes the offline copy.</li>
                 <li><strong>Save tools:</strong> Import, export, and back up compatible save files without digging through browser databases manually.</li>
                 <li><strong>Desktop and mobile controls:</strong> Keyboard, mouse, controllers, and responsive touch controls are supported from the same web client.</li>
                 <li><strong>Performance controls:</strong> Fullscreen and FPS limiting help tune the experience for laptops, desktops, and mobile devices.</li>
@@ -361,33 +362,48 @@
           <div class="vc-faq-list">
 
             <details class="vc-faq-item">
-              <summary class="vc-faq-q">Is this the full game? Do I need to upload files? <span class="vc-faq-icon">+</span></summary>
-              <p class="vc-faq-a">Yes, this is the full GTA Vice City experience. No file uploads are required. The game files (~701 MB) are downloaded automatically on your first visit and cached in your browser for instant loads forever after.</p>
+              <summary class="vc-faq-q">Can I play GTA Vice City in my browser without reinstalling it every time? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">Yes. GTA Browser is designed around a one-time local setup. On the first complete installation, the required Vice City game data is downloaded and stored inside your browser's Origin Private File System (OPFS). On later visits, the site checks that local storage first, so the full game archive does not need to be downloaded again unless you clear the site's browser data or the local copy becomes unavailable.</p>
             </details>
 
             <details class="vc-faq-item">
-              <summary class="vc-faq-q">How does the Save Manager work? <span class="vc-faq-icon">+</span></summary>
-              <p class="vc-faq-a">You can upload your existing .b save files from a PC or PS2 to resume your progress. You can also download backups to keep your virtual progress safe at any time.</p>
+              <summary class="vc-faq-q">Can GTA Browser work offline after the game has been downloaded? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">Yes, after a full local setup has completed and the offline app shell has been cached. The homepage, Play interface, browser runtime files, and locally installed game data can load from browser storage without an active internet connection. Online-only features such as comments, Discord, cloud services, and external links may not work while offline. Clearing site data removes the offline game copy and requires setup again.</p>
             </details>
 
             <details class="vc-faq-item">
-              <summary class="vc-faq-q">Does it support controllers and mobile? <span class="vc-faq-icon">+</span></summary>
-              <p class="vc-faq-a">Yes. Gamepads are fully supported on desktop browsers. On mobile, integrated on-screen touch controls appear automatically. Play in landscape mode for the best experience.</p>
+              <summary class="vc-faq-q">How large is the first GTA Vice City browser download, and where is it stored? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">The current full setup is roughly 701 MB before extraction. GTA Browser streams and extracts the archive into OPFS, a private storage area managed by your browser for this website. The files are not installed as a traditional Windows or Android program. Keep enough free device storage available for the extracted game data, save files, and normal browser operation.</p>
             </details>
 
             <details class="vc-faq-item">
-              <summary class="vc-faq-q">Why does the game show a black screen or run poorly? <span class="vc-faq-icon">+</span></summary>
-              <p class="vc-faq-a">Ensure your browser supports WebAssembly and Service Workers (Chrome 110+, Firefox 111+, Safari 16.4+). Try a hard-refresh (Ctrl+Shift+R). On slow devices, set the FPS limit to 30 above.</p>
+              <summary class="vc-faq-q">Does GTA Vice City browser play support mobile touch controls and gamepads? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">Yes. Desktop players can use keyboard and mouse, and supported browser gamepads can be used where available. On phones and tablets, GTA Browser provides on-screen touch controls that adapt between on-foot and vehicle gameplay. Landscape orientation is recommended on mobile because it gives more room for the game view, steering controls, and action buttons.</p>
             </details>
 
             <details class="vc-faq-item">
-              <summary class="vc-faq-q">Why are the physics acting weirdly or missions failing? <span class="vc-faq-icon">+</span></summary>
-              <p class="vc-faq-a">The original game was designed for 30 FPS. Running at higher framerates can cause physics glitches. Set the FPS limit to 30 in the panel above to fix mission-critical physics.</p>
+              <summary class="vc-faq-q">How do saves work in GTA Browser? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">Game progress can be stored locally in the browser, and the built-in Save Manager provides tools for backing up and restoring compatible save files. Exporting a backup is useful before clearing browser data, changing browsers, or moving to another device. Browser storage is tied to the exact site origin, so saves stored on one domain or browser profile do not automatically appear in another.</p>
             </details>
 
             <details class="vc-faq-item">
-              <summary class="vc-faq-q">My device is getting very hot. How do I fix this? <span class="vc-faq-icon">+</span></summary>
-              <p class="vc-faq-a">Set the FPS limit to 30 to significantly reduce CPU and GPU load. This is especially recommended for mobile devices and low-end laptops to prevent overheating.</p>
+              <summary class="vc-faq-q">Why does GTA Vice City show a black screen, stay on loading, or fail to start in the browser? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">A black screen or stuck loading state can be caused by incomplete local game files, blocked browser storage, an interrupted first download, low available disk space, or required browser features being unavailable. Use a current version of Chrome, Edge, Firefox, or Safari, allow the site to use browser storage, and retry the setup if it was interrupted. If a previous local installation is damaged, use the reset option and perform a clean setup.</p>
+            </details>
+
+            <details class="vc-faq-item">
+              <summary class="vc-faq-q">Why should I use the 30 FPS limit for GTA Vice City? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">Vice City was originally designed around a lower frame-rate target, and some classic mission logic, vehicle behavior, and physics can behave differently at very high frame rates. If you see unusual physics, unstable missions, or excessive CPU/GPU use, set the built-in FPS limiter to 30. This can also improve stability on older laptops, Chromebooks, and mobile devices.</p>
+            </details>
+
+            <details class="vc-faq-item">
+              <summary class="vc-faq-q">How can I improve GTA Vice City browser performance on a low-end PC or phone? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">Close unnecessary browser tabs and background applications, use the 30 FPS limit, keep enough free device storage available, and avoid battery-saving modes that heavily throttle the browser. After the first setup, locally cached OPFS files reduce repeated network work. Performance still depends on your CPU, GPU, browser, thermal limits, and available memory.</p>
+            </details>
+
+            <details class="vc-faq-item">
+              <summary class="vc-faq-q">What happens if I clear browser data or switch from gta-browser.vercel.app to gtabrowser.com? <span class="vc-faq-icon">+</span></summary>
+              <p class="vc-faq-a">OPFS, Service Worker caches, and local saves belong to the exact website origin that created them. Clearing site data removes that local installation. Data stored for the Vercel hostname does not automatically move to gtabrowser.com because browsers treat those as different origins. After you settle on the final domain, complete the setup there once and keep that site's data if you want repeat and offline play.</p>
             </details>
 
           </div>
@@ -419,6 +435,7 @@
 (function () {
     // Floating Discord button
     const btn = document.createElement("button");
+    btn.className = "vc-discord-floating";
     btn.innerHTML = `
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-discord" viewBox="0 0 16 16">
   <path d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612"/>
@@ -441,6 +458,7 @@
 
     // Widget container
     const box = document.createElement("div");
+    box.className = "vc-discord-widget";
     box.style.position = "fixed";
     box.style.bottom = "90px";
     box.style.right = "20px";
