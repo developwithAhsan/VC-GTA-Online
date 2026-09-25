@@ -1,0 +1,47 @@
+name: Localize gallery screenshots
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/localize-gallery.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  localize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download screenshots into repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/vc-gallery
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128 Safari/537.36"
+          curl -L --fail --retry 3 -A "$UA" "https://cdn.wccftech.com/wp-content/uploads/2025/12/GTA-Vice-City-1-1456x822.jpg" -o public/vc-gallery/vc-1.jpg
+          curl -L --fail --retry 3 -A "$UA" "https://www.apunkagames.net/wp-content/uploads/2013/10/GTA-Vice-City-screen-3.webp" -o public/vc-gallery/vc-2.webp
+          curl -L --fail --retry 3 -A "$UA" "https://img.tamindir.com/resize/1200x675/2026/04/476796/gta-vice-city-hileleri-neler-3.jpg" -o public/vc-gallery/vc-3.jpg
+          curl -L --fail --retry 3 -A "$UA" "https://images.steamusercontent.com/ugc/17676885265565996251/39E13DC17896CACAC36151F55BC749FBF258071D/?ima=fit&imcolor=%23000000&impolicy=Letterbox&imw=1600&letterbox=false" -o public/vc-gallery/vc-4.jpg
+          file public/vc-gallery/*
+          test -s public/vc-gallery/vc-1.jpg
+          test -s public/vc-gallery/vc-2.webp
+          test -s public/vc-gallery/vc-3.jpg
+          test -s public/vc-gallery/vc-4.jpg
+
+      - name: Commit local gallery assets
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/vc-gallery/vc-1.jpg public/vc-gallery/vc-2.webp public/vc-gallery/vc-3.jpg public/vc-gallery/vc-4.jpg
+          if git diff --cached --quiet; then
+            echo "No gallery changes to commit."
+            exit 0
+          fi
+          git commit -m "Localize gallery screenshots [skip actions]"
+          git push
