@@ -345,16 +345,6 @@ async function initSetupFlow() {
     });
   }
 
-  const formatTimeRemaining = (seconds) => {
-    if (!isFinite(seconds) || seconds <= 0) return "";
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    if (m >= 60) return `~${Math.floor(m / 60)}h ${m % 60}m remaining`;
-    if (m > 0) return `~${m}m ${s}s remaining`;
-    if (seconds < 5) return "almost done…";
-    return `~${s}s remaining`;
-  };
-
   const setupInstallButton = (isRetry = false) => {
     clickToPlayButton.disabled = false;
     clickToPlayButton.classList.remove("disabled");
@@ -367,10 +357,14 @@ async function initSetupFlow() {
     document.body.classList.add("vc-game-shell-active");
     errorBox.classList.add("hidden");
     progress.classList.remove("hidden");
-    progressLabel.textContent = "Connecting…";
+    if (progressTitle) progressTitle.textContent = "LOADING...";
+    progressLabel.textContent = "Preparing game files…";
     progressPercent.textContent = "0%";
     progressBar.style.width = "0%";
-    if (progressFile) progressFile.textContent = "";
+    if (progressFile) {
+      progressFile.textContent = "";
+      progressFile.hidden = true;
+    }
     setPlayAvailability(false);
 
     // Rotate tips every 7 seconds while loading
@@ -416,31 +410,11 @@ async function initSetupFlow() {
           progressBar.style.width = `${msg.pct}%`;
           progressPercent.textContent = `${Math.round(msg.pct)}%`;
 
-          if (msg.phase === "downloading" || msg.phase === "reading") {
-            if (progressFile) progressFile.textContent = "";
-            if (msg.total > 0) {
-              if (!downloadStartTime) downloadStartTime = Date.now();
-              const loadedMB = (msg.loaded / 1048576).toFixed(0);
-              const totalMB = (msg.total / 1048576).toFixed(0);
-              const elapsedSec = (Date.now() - downloadStartTime) / 1000;
-              const speed = elapsedSec > 1 ? msg.loaded / elapsedSec : 0;
-              const remainingSec = speed > 0 ? (msg.total - msg.loaded) / speed : Infinity;
-              const eta = formatTimeRemaining(remainingSec);
-              const speedMB = speed > 0 ? ` • ${(speed / 1048576).toFixed(1)} MB/s` : "";
-              const label = msg.phase === "reading" ? "Reading" : (msg.resuming ? "Resuming" : "Downloading");
-              if (msg.resuming && progressTitle) progressTitle.textContent = "RESUMING...";
-              progressLabel.textContent = `${label}… ${loadedMB} / ${totalMB} MB${speedMB}${eta ? "  •  " + eta : ""}`;
-            } else {
-              progressLabel.textContent = "Connecting to server…";
-            }
-          } else if (msg.phase === "extracting") {
-            if (lastPhase !== "extracting" && progressTitle) {
-              progressTitle.textContent = "EXTRACTING...";
-            }
-            if (msg.file && progressFile) {
-              progressFile.textContent = msg.file;
-            }
-            progressLabel.textContent = `Writing to storage… ${msg.done || 0} files`;
+          if (progressTitle) progressTitle.textContent = "LOADING...";
+          progressLabel.textContent = "Preparing game files…";
+          if (progressFile) {
+            progressFile.textContent = "";
+            progressFile.hidden = true;
           }
 
           lastPhase = msg.phase;
@@ -451,8 +425,12 @@ async function initSetupFlow() {
           if (tipInterval) clearInterval(tipInterval);
           progressBar.style.width = "100%";
           progressPercent.textContent = "100%";
-          progressLabel.textContent = "Verifying…";
-          if (progressFile) progressFile.textContent = "";
+          if (progressTitle) progressTitle.textContent = "LOADING...";
+          progressLabel.textContent = "Preparing game files…";
+          if (progressFile) {
+            progressFile.textContent = "";
+            progressFile.hidden = true;
+          }
           if (progressTip) progressTip.textContent = "";
           const { ready: isReady, reason } = await waitForGameReady();
           if (isReady) {
