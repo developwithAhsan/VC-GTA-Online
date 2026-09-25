@@ -1,5 +1,10 @@
 const OPFS_MARKER = '_game_ready';
 
+const REMOTE_BASES = {
+    vcsky: 'https://cdn.dos.zone/vcsky/',
+    vcbr: 'https://br.cdn.dos.zone/vcsky/',
+};
+
 const CONTENT_TYPES = new Map([
     ['.wasm', 'application/wasm'],
     ['.js', 'application/javascript'],
@@ -30,14 +35,15 @@ const CONTENT_TYPES = new Map([
 ]);
 
 self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
     const path = url.pathname;
+
     if ((path.startsWith('/vcsky/') || path.startsWith('/vcbr/')) &&
         (event.request.method === 'GET' || event.request.method === 'HEAD')) {
-        event.respondWith(serveFromOPFS(event.request, path));
+        event.respondWith(handleGameAssetRequest(event, url));
     }
 });
 
@@ -60,13 +66,9 @@ function buildHeaders(filename, size) {
     headers.set('Content-Type', getContentType(filename));
     headers.set('Content-Length', String(size));
     headers.set('Accept-Ranges', 'bytes');
-    headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-    headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
-
     if (filename.toLowerCase().endsWith('.br')) {
         headers.set('Content-Encoding', 'br');
     }
-
     return headers;
 }
 
@@ -89,14 +91,27 @@ function parseRange(rangeHeader, size) {
     return { start, end };
 }
 
+function splitSafePath(pathname) {
+    const parts = pathname.replace(/^\//, '').split('/').map(decodeURIComponent);
+    if (!parts.length || !['vcsky', 'vcbr'].includes(parts[0])) {
+        throw new Error('Unsupported asset path');
+    }
+    if (parts.some(part => !part || part === '.' || part === '..')) {
+        throw new Error('Unsafe asset path');
+    }
+    return parts;
+}
+
 async function serveFromOPFS(request, pathname) {
     try {
         const root = await navigator.storage.getDirectory();
-        const parts = pathname.replace(/^\//, '').split('/').map(decodeURIComponent);
+        const parts = splitSafePath(pathname);
         let dir = root;
+
         for (let i = 0; i < parts.length - 1; i++) {
             dir = await dir.getDirectoryHandle(parts[i]);
         }
+
         const filename = parts[parts.length - 1];
         const fileHandle = await dir.getFileHandle(filename);
         const file = await fileHandle.getFile();
@@ -117,13 +132,117 @@ async function serveFromOPFS(request, pathname) {
         }
 
         return new Response(file, { status: 200, headers });
-    } catch (error) {
-        return new Response('Not found', { status: 404 });
+    } catch {
+        return null;
     }
 }
 
+function getRemoteUrl(url) {
+    if (url.pathname.startsWith('/vcsky/')) {
+        const remote = new URL(url.pathname.slice('/vcsky/'.length), REMOTE_BASES.vcsky);
+        remote.search = url.search;
+        return remote.href;
+    }
+
+    if (url.pathname.startsWith('/vcbr/')) {
+        const remote = new URL(url.pathname.slice('/vcbr/'.length), REMOTE_BASES.vcbr);
+        remote.search = url.search;
+        return remote.href;
+    }
+
+    throw new Error('Unsupported remote asset path');
+}
+
+async function cacheResponseInOPFS(pathname, response) {
+    if (!response.body || response.status !== 200) return;
+
+    const parts = splitSafePath(pathname);
+    const root = await navigator.storage.getDirectory();
+    let dir = root;
+
+    for (let i = 0; i < parts.length - 1; i++) {
+        dir = await dir.getDirectoryHandle(parts[i], { create: true });
+    }
+
+    const filename = parts[parts.length - 1];
+    const fileHandle = await dir.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    const reader = response.body.getReader();
+    let written = 0;
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (!value || value.byteLength === 0) continue;
+            await writable.write(value);
+            written += value.byteLength;
+        }
+
+        if (written === 0) {
+            throw new Error('Remote asset returned an empty body');
+        }
+
+        await writable.close();
+    } catch (error) {
+        try { await writable.abort?.(); } catch {}
+        try { await dir.removeEntry(filename); } catch {}
+        throw error;
+    }
+}
+
+async function fetchRemoteAsset(event, request, url) {
+    const remoteUrl = getRemoteUrl(url);
+    const headers = new Headers();
+    const range = request.headers.get('Range');
+    const ifRange = request.headers.get('If-Range');
+
+    if (range) headers.set('Range', range);
+    if (ifRange) headers.set('If-Range', ifRange);
+
+    let response;
+    try {
+        response = await fetch(remoteUrl, {
+            method: request.method,
+            headers,
+            mode: 'cors',
+            credentials: 'omit',
+            cache: 'no-store',
+            redirect: 'follow',
+        });
+    } catch (error) {
+        return new Response(`Streaming fetch failed: ${error.message}`, {
+            status: 502,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
+    }
+
+    if (!response.ok && response.status !== 206) {
+        return response;
+    }
+
+    // Only complete non-range GETs are cached. Partial responses are never
+    // written to the final OPFS path, preventing corrupt local assets.
+    if (request.method === 'GET' && !range && response.status === 200 && response.body) {
+        const cacheCopy = response.clone();
+        event.waitUntil(
+            cacheResponseInOPFS(url.pathname, cacheCopy).catch(error => {
+                console.warn('[sw] OPFS stream cache failed:', url.pathname, error);
+            }),
+        );
+    }
+
+    return response;
+}
+
+async function handleGameAssetRequest(event, url) {
+    const local = await serveFromOPFS(event.request, url.pathname);
+    if (local) return local;
+    return fetchRemoteAsset(event, event.request, url);
+}
+
 self.addEventListener('message', async event => {
-    if (event.data.type === 'IS_READY') {
+    if (event.data?.type === 'IS_READY') {
         const ready = await isGameReady();
         const port = event.ports[0] || event.source;
         if (port) port.postMessage({ type: 'IS_READY', ready });

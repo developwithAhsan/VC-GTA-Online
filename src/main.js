@@ -182,7 +182,7 @@ async function resetGameData() {
   // Clear OPFS: delete all known directories and the marker file
   try {
     const root = await navigator.storage.getDirectory();
-    for (const name of ["vcbr", "vcsky", "_game_ready"]) {
+    for (const name of ["vcbr", "vcsky", "_game_ready", "_dl_tmp"]) {
       try {
         await root.removeEntry(name, { recursive: true });
       } catch {
@@ -249,9 +249,9 @@ const VC_TIPS = [
   "Cheat: PANZER spawns a Rhino tank right next to you.",
   "Cheat: ROCKANDROLLMAN spawns a Sanchez dirt bike.",
   // Loading info
-  "Files are being written to your browser's private local storage (OPFS).",
-  "This is a one-time download — the game loads instantly on every future visit.",
-  "If the download stops, just click Install Game again — it resumes automatically.",
+  "Fast Start streams missing game assets and saves successful downloads in OPFS.",
+  "Files already cached in your browser load locally on future visits.",
+  "If streaming is unavailable, the full resumable installer remains available as a fallback.",
   "The game uses WebAssembly to run the original engine at near-native speed.",
   "Your save files stay in your browser — use the Save Manager to back them up.",
 ];
@@ -310,20 +310,13 @@ async function initSetupFlow() {
 
   if (resetBtn) {
     resetBtn.addEventListener("click", async () => {
-      if (!confirm("This will delete all local game data (OPFS + IndexedDB). You will need to re-import game.tar.gz. Continue?")) {
+      if (!confirm("This will delete locally cached game data and browser saves. Streaming assets will be cached again when you play. Continue?")) {
         return;
       }
       resetBtn.disabled = true;
       resetBtn.textContent = "Resetting…";
       await resetGameData();
-      setStorageStatus("Import required", "missing");
-      setPlayAvailability(false);
-      progress.classList.add("hidden");
-      errorBox.classList.add("hidden");
-      selectedFileName.textContent = "No file selected";
-      fileInput.value = "";
-      resetBtn.disabled = false;
-      resetBtn.textContent = "Reset game data";
+      window.location.reload();
     });
   }
 
@@ -499,19 +492,47 @@ async function initSetupFlow() {
   }
 
   const { ready, reason } = await waitForGameReady(2, 150);
-  console.log("[setup] game ready in OPFS:", ready, reason || "");
+  console.log("[setup] full game ready in OPFS:", ready, reason || "");
+
   if (ready) {
-    setStorageStatus("Ready to play", "ready");
+    window.__gtaStreamingMode = false;
+    setStorageStatus("Ready to play — local cache", "ready");
     setPlayAvailability(true);
     progress.classList.add("hidden");
+    if (navigator.storage?.persist) {
+      navigator.storage.persist().catch(() => false);
+    }
     return;
   }
 
-  // Game not installed — show install button and wait for user to click
-  setStorageStatus("Click INSTALL GAME to set up (~701 MB, one-time)", "missing");
+  const forceFullInstall = new URLSearchParams(window.location.search).get("full_install") === "1";
 
-  // Use one hosting-independent asset source in every environment.
-  // Override it with VITE_ASSET_URL when needed.
+  // Hybrid Progressive Streaming: the Service Worker serves local OPFS files
+  // first, then streams missing /vcsky and /vcbr assets from the upstream CDN
+  // and caches successful full responses back into OPFS.
+  if (!forceFullInstall) {
+    setStorageStatus("Checking Fast Start…", "checking");
+    const streamingReason = await verifyGameServing();
+
+    if (streamingReason === null) {
+      window.__gtaStreamingMode = true;
+      setStorageStatus("Fast Start ready — assets cache locally as you play", "ready");
+      setPlayAvailability(true);
+      progress.classList.add("hidden");
+      errorBox.classList.add("hidden");
+      if (navigator.storage?.persist) {
+        navigator.storage.persist().catch(() => false);
+      }
+      return;
+    }
+
+    console.warn("[setup] Fast Start unavailable, using full-install fallback:", streamingReason);
+  }
+
+  // Keep the current resumable archive install as the compatibility fallback.
+  window.__gtaStreamingMode = false;
+  setStorageStatus("Fast Start unavailable — full install fallback (~701 MB)", "missing");
+
   const downloadUrl = ASSET_RELEASE_URL;
 
   const startInstall = async () => {

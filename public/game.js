@@ -154,37 +154,39 @@ async function loadData() {
     const reader = response.body.getReader();
     let receivedLength = 0;
 
-    // Pre-allocate when content-length is known — halves peak RAM vs chunk array + concatenation.
+    // Streaming/CDN responses can expose a transfer Content-Length that is
+    // smaller than the decoded body. Use a growable preallocated buffer so
+    // compressed responses cannot overflow it and unknown lengths do not force
+    // us to retain hundreds of individual chunks in memory.
     const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
-    if (contentLength > 0) {
-        const buffer = new Uint8Array(contentLength);
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer.set(value, receivedLength);
-            receivedLength += value.length;
-            if (typeof setStatus === 'function') {
-                setStatus(`Downloading...(${receivedLength}/${dataSize})`);
-            }
-        }
-        return buffer;
-    }
+    let capacity = Math.max(contentLength || 0, dataSize || 0, 8 * 1024 * 1024);
+    let buffer = new Uint8Array(capacity);
 
-    // Fallback: collect chunks then concatenate (content-length unavailable)
-    const chunks = [];
+    const ensureCapacity = (required) => {
+        if (required <= buffer.length) return;
+        let nextSize = buffer.length;
+        while (nextSize < required) {
+            nextSize = Math.max(required, Math.ceil(nextSize * 1.5));
+        }
+        const next = new Uint8Array(nextSize);
+        next.set(buffer.subarray(0, receivedLength));
+        buffer = next;
+    };
+
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        chunks.push(value);
+
+        ensureCapacity(receivedLength + value.length);
+        buffer.set(value, receivedLength);
         receivedLength += value.length;
+
         if (typeof setStatus === 'function') {
             setStatus(`Downloading...(${receivedLength}/${dataSize})`);
         }
     }
-    const buffer = new Uint8Array(receivedLength);
-    let position = 0;
-    for (const chunk of chunks) { buffer.set(chunk, position); position += chunk.length; }
-    return buffer;
+
+    return buffer.subarray(0, receivedLength);
 };
 
 function setupVisualJoysticks() {
