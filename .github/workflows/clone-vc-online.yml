@@ -1,0 +1,45 @@
+name: Clone vc-online into VC-GTA-Online
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  clone-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone source repository
+        run: |
+          git clone --depth 1 https://github.com/developwithAhsan/vc-online.git /tmp/vc-online-source
+
+      - name: Replace target contents with source snapshot
+        run: |
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a /tmp/vc-online-source/. .
+          rm -rf .git
+          cp -a /tmp/vc-online-source/.git /tmp/source-git-backup
+          rm -rf .git
+        shell: bash
+
+      - name: Restore target Git metadata and commit
+        run: |
+          git_dir="$(pwd)/.git"
+          if [ ! -d "$git_dir" ]; then
+            echo "Target .git directory was removed unexpectedly."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Clone vc-online into VC-GTA-Online" || exit 0
+          git push origin HEAD:main
