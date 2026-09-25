@@ -350,7 +350,21 @@
         <!-- Discussion -->
         <section class="vc-section vc-discussion-section">
           <h2 class="vc-section-title">Discussion</h2>
-<div class='wbnz-comments' data-webynize-id='13086'></div><script defer src='https://widgets.webynize.com/comments.js'></script>
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+    this.page.url = "https://gtabrowser.com/";
+    this.page.identifier = "gtabrowser-home";
+  };
+
+  (function () {
+    var d = document, s = d.createElement("script");
+    s.src = "https://gtabrowser.disqus.com/embed.js";
+    s.setAttribute("data-timestamp", +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 
          
          
