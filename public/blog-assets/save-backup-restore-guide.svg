@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+ <defs>
+  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0c1328"/><stop offset=".62" stop-color="#263f78"/><stop offset="1" stop-color="#0b111a"/></linearGradient>
+  <radialGradient id="r"><stop stop-color="#8ea7ff" stop-opacity=".30"/><stop offset="1" stop-color="#8ea7ff" stop-opacity="0"/></radialGradient>
+  <filter id="b"><feGaussianBlur stdDeviation="28"/></filter>
+ </defs>
+ <rect width="1200" height="630" rx="34" fill="url(#g)"/>
+ <circle cx="920" cy="155" r="260" fill="url(#r)" filter="url(#b)"/>
+ <g opacity=".22" stroke="#8ea7ff" fill="none"><path d="M60 470 C250 390 340 540 525 455S830 365 1140 480" stroke-width="2"/><path d="M70 505 C260 425 390 565 600 485S930 410 1130 520" stroke-width="1"/></g>
+ <rect x="70" y="70" width="1060" height="490" rx="26" fill="#07111c" fill-opacity=".42" stroke="#fff" stroke-opacity=".11"/>
+ <rect x="104" y="102" width="520" height="330" rx="18" fill="#08131f" stroke="#8ea7ff" stroke-opacity=".50"/>
+ <rect x="104" y="102" width="520" height="46" rx="18" fill="#102033"/><circle cx="130" cy="125" r="7" fill="#ff6c7d"/><circle cx="154" cy="125" r="7" fill="#ffd16b"/><circle cx="178" cy="125" r="7" fill="#69d9a9"/>
+ <rect x="135" y="185" width="240" height="22" rx="8" fill="#8ea7ff" fill-opacity=".72"/><rect x="135" y="225" width="410" height="13" rx="6" fill="#d9ebff" fill-opacity=".17"/><rect x="135" y="251" width="355" height="13" rx="6" fill="#d9ebff" fill-opacity=".12"/><rect x="135" y="296" width="150" height="90" rx="14" fill="#8ea7ff" fill-opacity=".13" stroke="#8ea7ff" stroke-opacity=".33"/><rect x="305" y="296" width="240" height="90" rx="14" fill="#fff" fill-opacity=".045" stroke="#fff" stroke-opacity=".10"/>
+ <text x="670" y="150" fill="#8ea7ff" font-family="Arial,sans-serif" font-size="24" font-weight="700" letter-spacing="4">SAVES</text>
+ <foreignObject x="668" y="186" width="430" height="210"><div xmlns="http://www.w3.org/1999/xhtml" style="font:700 50px/1.03 Arial,sans-serif;color:#f3f8ff;letter-spacing:-1.5px">Back Up and Restore Vice City Browser Saves</div></foreignObject>
+ <text x="670" y="445" fill="#a9bdd1" font-family="Arial,sans-serif" font-size="23">Import • Export • Move devices</text>
+ <text x="670" y="510" fill="#fff" font-family="Arial,sans-serif" font-size="22" font-weight="700">GTABROWSER.COM</text>
+ </svg>
