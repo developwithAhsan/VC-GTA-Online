@@ -44,23 +44,17 @@ function hidePwaInstallPromo() {
 
 function updatePwaInstallPromoAction() {
   const button = document.getElementById("pwa-install-button");
-  const message = document.getElementById("pwa-install-message");
-  if (!button || !message) return;
-
-  if (deferredPwaInstallPrompt) {
-    button.textContent = "INSTALL GTA BROWSER";
-    message.textContent =
-      "Save GTA Browser to your device. The game download running now is the one-time download; after setup, you can reopen the installed app and play offline from local browser storage.";
-  } else {
-    button.textContent = "HOW TO INSTALL";
-    message.textContent =
-      "The game download running now is the one-time download. To keep GTA Browser on this device, open your browser menu and choose Install app or Add to Home Screen; after setup, the locally stored game can be played offline.";
-  }
+  if (!button) return;
+  button.textContent = "INSTALL";
+  button.disabled = !deferredPwaInstallPrompt;
 }
 
 function showPwaInstallPromo() {
   if (
+    !deferredPwaInstallPrompt ||
     isStandalonePwa() ||
+    document.body.classList.contains("vc-game-shell-active") ||
+    document.body.classList.contains("gameIsStarted") ||
     window.localStorage.getItem(PWA_INSTALLED_KEY) === "1"
   ) {
     return;
@@ -83,6 +77,7 @@ function showPwaInstallPromo() {
 function schedulePwaInstallPromo() {
   if (
     pwaInstallPromoShownThisSession ||
+    !deferredPwaInstallPrompt ||
     isStandalonePwa() ||
     window.localStorage.getItem(PWA_INSTALLED_KEY) === "1"
   ) {
@@ -93,7 +88,7 @@ function schedulePwaInstallPromo() {
   pwaInstallShowTimer = window.setTimeout(() => {
     pwaInstallShowTimer = null;
     showPwaInstallPromo();
-  }, 10000);
+  }, 1500);
 }
 
 function cancelPwaInstallPromo({ hide = false } = {}) {
@@ -108,6 +103,7 @@ window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredPwaInstallPrompt = event;
   updatePwaInstallPromoAction();
+  schedulePwaInstallPromo();
 });
 
 window.addEventListener("appinstalled", () => {
@@ -437,10 +433,7 @@ async function initSetupFlow() {
 
   if (pwaInstallButton) {
     pwaInstallButton.addEventListener("click", async () => {
-      if (!deferredPwaInstallPrompt) {
-        updatePwaInstallPromoAction();
-        return;
-      }
+      if (!deferredPwaInstallPrompt) return;
 
       const promptEvent = deferredPwaInstallPrompt;
       deferredPwaInstallPrompt = null;
@@ -700,7 +693,7 @@ async function initSetupFlow() {
     document.body.classList.add("vc-game-shell-active");
     clickToPlayButton.disabled = true;
     clickToPlayButton.dataset.installMode = "";
-    schedulePwaInstallPromo();
+    cancelPwaInstallPromo({ hide: true });
 
     if (downloadUrl) {
       console.log("[setup] user triggered download from:", downloadUrl);

@@ -3458,3 +3458,16 @@ body.vc-game-shell-active .vc-discord-widget {
     transition: none;
   }
 }
+
+
+/* PWA install suggestion is homepage-only, never shown over loading or gameplay. */
+body.vc-game-shell-active .pwa-install-promo,
+body.gameIsStarted .pwa-install-promo {
+  display: none !important;
+}
+
+.pwa-install-button:disabled {
+  opacity: .55;
+  cursor: default;
+  transform: none;
+}
