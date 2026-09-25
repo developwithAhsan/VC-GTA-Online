@@ -143,9 +143,6 @@ body.gameIsStarted .intro-container {
   display: none;
 }
 
-  100% { background-position: -200% 0; }
-}
-
 .ls-pct {
   margin: 2px 0 0;
   font-size: 0.88rem;
