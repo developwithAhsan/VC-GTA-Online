@@ -97,3 +97,14 @@ This repository is intended for development and experimentation with the VC Onli
 ## Project Name
 
 **VC Online**
+
+## License
+
+The software in this repository is distributed under the MIT License, subject
+to the third-party exclusions and notices described in
+[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+
+The MIT license does not grant rights to GTA: Vice City game assets, trademarks,
+music, artwork, characters, or other proprietary Rockstar Games / Take-Two
+Interactive material. See the third-party notices before redistributing or
+deploying this project.
