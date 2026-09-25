@@ -1,3 +1,103 @@
+const APP_CACHE = 'gta-browser-offline-v1';
+
+const CORE_OFFLINE_ASSETS = [
+    '/',
+    '/index.html',
+    '/manifest.webmanifest',
+    '/favicon.svg',
+    '/icon.webp',
+    '/GamepadEmulator.js',
+    '/jsdos-cloud-sdk.js',
+    '/idbfs.js',
+    '/game.js',
+    '/index.js',
+    '/extract-worker.js',
+    '/modules/runtime.js',
+    '/modules/loader.js',
+    '/modules/fs.js',
+    '/modules/audio.js',
+    '/modules/graphics.js',
+    '/modules/events.js',
+    '/modules/fetch.js',
+    '/modules/syscalls.js',
+    '/modules/main.js',
+    '/modules/cheats.js',
+    '/modules/asm_consts/en.js',
+    '/modules/packages/en.js',
+];
+
+async function cacheCoreOfflineShell() {
+    const cache = await caches.open(APP_CACHE);
+    await Promise.allSettled(
+        CORE_OFFLINE_ASSETS.map(async asset => {
+            const response = await fetch(asset, { cache: 'reload' });
+            if (response.ok) {
+                await cache.put(asset, response);
+            }
+        }),
+    );
+}
+
+async function cleanupOldAppCaches() {
+    const keys = await caches.keys();
+    await Promise.all(
+        keys
+            .filter(key => key.startsWith('gta-browser-offline-') && key !== APP_CACHE)
+            .map(key => caches.delete(key)),
+    );
+}
+
+async function handleNavigation(request) {
+    const cache = await caches.open(APP_CACHE);
+
+    try {
+        const response = await fetch(request);
+        if (response.ok) {
+            await cache.put('/', response.clone());
+            await cache.put('/index.html', response.clone());
+        }
+        return response;
+    } catch (_) {
+        return (
+            (await cache.match(request, { ignoreSearch: true })) ||
+            (await cache.match('/')) ||
+            (await cache.match('/index.html')) ||
+            new Response(
+                '<!doctype html><meta charset="utf-8"><title>GTA Browser Offline</title><h1>GTA Browser</h1><p>The offline app shell is not cached yet. Connect once and reload the site.</p>',
+                { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+            )
+        );
+    }
+}
+
+async function handleSameOriginStatic(request) {
+    // Byte-range requests need native/OPFS range semantics and should not be
+    // stored as partial Cache Storage entries.
+    if (request.headers.has('Range')) {
+        return fetch(request);
+    }
+
+    const cache = await caches.open(APP_CACHE);
+    const cached = await cache.match(request, { ignoreSearch: false });
+
+    if (cached) {
+        return cached;
+    }
+
+    try {
+        const response = await fetch(request);
+        if (response.ok && response.status === 200 && response.type !== 'opaque') {
+            await cache.put(request, response.clone());
+        }
+        return response;
+    } catch (_) {
+        return new Response('Offline resource unavailable', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
+    }
+}
+
 const OPFS_MARKER = '_game_ready';
 
 const REMOTE_BASES = {
@@ -34,17 +134,45 @@ const CONTENT_TYPES = new Map([
     ['.bin', 'application/octet-stream'],
 ]);
 
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+self.addEventListener('install', event => {
+    self.skipWaiting();
+    event.waitUntil(cacheCoreOfflineShell());
+});
+
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        Promise.all([
+            cleanupOldAppCaches(),
+            self.clients.claim(),
+        ]),
+    );
+});
 
 self.addEventListener('fetch', event => {
-    const url = new URL(event.request.url);
+    const request = event.request;
+    const url = new URL(request.url);
     const path = url.pathname;
 
+    // Game data remains OPFS-first. Do not duplicate large game assets into
+    // Cache Storage.
     if ((path.startsWith('/vcsky/') || path.startsWith('/vcbr/')) &&
-        (event.request.method === 'GET' || event.request.method === 'HEAD')) {
+        (request.method === 'GET' || request.method === 'HEAD')) {
         event.respondWith(handleGameAssetRequest(event, url));
+        return;
     }
+
+    if (request.method !== 'GET') return;
+
+    // Keep third-party services (comments, Discord, cloud APIs, fonts, etc.)
+    // untouched. They may fail while offline without affecting the local game.
+    if (url.origin !== self.location.origin) return;
+
+    if (request.mode === 'navigate') {
+        event.respondWith(handleNavigation(request));
+        return;
+    }
+
+    event.respondWith(handleSameOriginStatic(request));
 });
 
 function getContentType(filename) {
@@ -242,6 +370,17 @@ async function handleGameAssetRequest(event, url) {
 }
 
 self.addEventListener('message', async event => {
+    if (event.data?.type === 'WARM_OFFLINE_SHELL') {
+        const port = event.ports?.[0];
+        try {
+            await cacheCoreOfflineShell();
+            if (port) port.postMessage({ type: 'OFFLINE_SHELL_READY', ready: true });
+        } catch (error) {
+            if (port) port.postMessage({ type: 'OFFLINE_SHELL_READY', ready: false, message: error.message });
+        }
+        return;
+    }
+
     if (event.data?.type === 'IS_READY') {
         const ready = await isGameReady();
         const port = event.ports[0] || event.source;

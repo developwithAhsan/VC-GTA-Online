@@ -1,0 +1,19 @@
+{
+  "name": "GTA Browser — Vice City Online",
+  "short_name": "GTA Browser",
+  "description": "Play the locally installed Vice City browser edition with offline-capable app shell and OPFS game storage.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#131920",
+  "theme_color": "#131920",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

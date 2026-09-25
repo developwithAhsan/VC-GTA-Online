@@ -178,6 +178,31 @@ async function waitForGameReady(retries = 6, delayMs = 400) {
   return { ready: false, reason: lastReason };
 }
 
+
+async function warmOfflineShell() {
+  if (!navigator.serviceWorker?.controller) return false;
+
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    const timeout = window.setTimeout(() => resolve(false), 10000);
+
+    channel.port1.onmessage = (event) => {
+      window.clearTimeout(timeout);
+      resolve(event.data?.ready === true);
+    };
+
+    try {
+      navigator.serviceWorker.controller.postMessage(
+        { type: "WARM_OFFLINE_SHELL" },
+        [channel.port2],
+      );
+    } catch {
+      window.clearTimeout(timeout);
+      resolve(false);
+    }
+  });
+}
+
 async function resetGameData() {
   // Clear OPFS: delete all known directories and the marker file
   try {
@@ -431,9 +456,13 @@ async function initSetupFlow() {
           if (progressTip) progressTip.textContent = "";
           const { ready: isReady, reason } = await waitForGameReady();
           if (isReady) {
-            setStorageStatus("Ready to play", "ready");
+            setStorageStatus(
+              navigator.onLine ? "Ready to play — offline capable" : "Offline ready — playing from local storage",
+              "ready",
+            );
             setPlayAvailability(true);
             progress.classList.add("hidden");
+            void warmOfflineShell();
           } else {
             onInstallError(`Verification failed: ${reason}. Please reset and try again.`);
           }
@@ -496,9 +525,13 @@ async function initSetupFlow() {
 
   if (ready) {
     window.__gtaStreamingMode = false;
-    setStorageStatus("Ready to play — local cache", "ready");
+    setStorageStatus(
+      navigator.onLine ? "Ready to play — local cache" : "Offline ready — playing from local storage",
+      "ready",
+    );
     setPlayAvailability(true);
     progress.classList.add("hidden");
+    void warmOfflineShell();
     if (navigator.storage?.persist) {
       navigator.storage.persist().catch(() => false);
     }
