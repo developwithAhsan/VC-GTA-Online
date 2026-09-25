@@ -3120,3 +3120,65 @@ body.vc-tool-open #setup-progress:not(.hidden) {
     animation-duration: 14s;
   }
 }
+
+/* ─── More Games sidebar card ─────────────────────────────── */
+.vc-more-games-card {
+  padding-bottom: 12px;
+}
+
+.vc-more-games-list {
+  display: grid;
+  gap: 7px;
+}
+
+.vc-more-game-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  padding: 9px 11px;
+  border: 1px solid rgba(83, 122, 161, .34);
+  border-radius: 8px;
+  background:
+    linear-gradient(110deg, rgba(69, 217, 255, .055), rgba(144, 104, 255, .06), rgba(255, 79, 175, .045));
+  color: var(--text-2);
+  text-decoration: none;
+  transition:
+    transform .18s ease,
+    border-color .18s ease,
+    background .18s ease,
+    color .18s ease,
+    box-shadow .18s ease;
+}
+
+.vc-more-game-name {
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .015em;
+}
+
+.vc-more-game-arrow {
+  color: #68dcff;
+  font-size: .92rem;
+  line-height: 1;
+  opacity: .82;
+  transition: transform .18s ease, color .18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .vc-more-game-link:hover {
+    transform: translateX(3px);
+    border-color: rgba(79, 211, 255, .62);
+    background:
+      linear-gradient(110deg, rgba(69, 217, 255, .11), rgba(144, 104, 255, .10), rgba(255, 79, 175, .08));
+    color: #f4fbff;
+    box-shadow: 0 7px 18px rgba(0, 0, 0, .16);
+  }
+
+  .vc-more-game-link:hover .vc-more-game-arrow {
+    transform: translate(2px, -2px);
+    color: #ff77c4;
+  }
+}
+
