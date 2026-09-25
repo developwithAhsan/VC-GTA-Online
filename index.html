@@ -141,6 +141,20 @@
       <p id="setup-progress-tip" class="ls-tip"></p>
     </div>
 
+    <!-- PWA install promo: shown briefly during the first full game download -->
+    <aside id="pwa-install-promo" class="pwa-install-promo" aria-hidden="true" aria-live="polite">
+      <button id="pwa-install-close" class="pwa-install-close" type="button" aria-label="Close install suggestion">×</button>
+      <div class="pwa-install-icon" aria-hidden="true">
+        <img src="/favicon.svg" alt="" width="36" height="36" />
+      </div>
+      <div class="pwa-install-copy">
+        <span class="pwa-install-eyebrow">OFFLINE PLAY</span>
+        <strong class="pwa-install-title">Install GTA Browser</strong>
+        <p id="pwa-install-message">Save GTA Browser to your device. The game download running now is the one-time download; after setup, you can reopen the installed app and play offline from local browser storage.</p>
+        <button id="pwa-install-button" class="pwa-install-button" type="button">INSTALL GTA BROWSER</button>
+      </div>
+    </aside>
+
     <!-- Save Manager Modal -->
     <div id="save-manager-modal" class="sm-overlay hidden" role="dialog" aria-modal="true" aria-label="Save Manager" aria-hidden="true">
       <div class="sm-panel">

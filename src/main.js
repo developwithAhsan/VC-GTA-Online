@@ -7,6 +7,117 @@ const ASSET_RELEASE_URL = import.meta.env.VITE_ASSET_URL || "https://gta-proxy.e
 
 const BASE = import.meta.env.BASE_URL;
 
+const PWA_INSTALLED_KEY = "gtabrowser:pwa-installed";
+let deferredPwaInstallPrompt = null;
+let pwaInstallShowTimer = null;
+let pwaInstallHideTimer = null;
+let pwaInstallPromoShownThisSession = false;
+
+function isStandalonePwa() {
+  return (
+    window.matchMedia?.("(display-mode: standalone)")?.matches === true ||
+    window.navigator.standalone === true
+  );
+}
+
+function clearPwaInstallTimers() {
+  if (pwaInstallShowTimer) {
+    window.clearTimeout(pwaInstallShowTimer);
+    pwaInstallShowTimer = null;
+  }
+  if (pwaInstallHideTimer) {
+    window.clearTimeout(pwaInstallHideTimer);
+    pwaInstallHideTimer = null;
+  }
+}
+
+function hidePwaInstallPromo() {
+  const promo = document.getElementById("pwa-install-promo");
+  if (!promo) return;
+  promo.classList.remove("is-visible");
+  promo.setAttribute("aria-hidden", "true");
+  if (pwaInstallHideTimer) {
+    window.clearTimeout(pwaInstallHideTimer);
+    pwaInstallHideTimer = null;
+  }
+}
+
+function updatePwaInstallPromoAction() {
+  const button = document.getElementById("pwa-install-button");
+  const message = document.getElementById("pwa-install-message");
+  if (!button || !message) return;
+
+  if (deferredPwaInstallPrompt) {
+    button.textContent = "INSTALL GTA BROWSER";
+    message.textContent =
+      "Save GTA Browser to your device. The game download running now is the one-time download; after setup, you can reopen the installed app and play offline from local browser storage.";
+  } else {
+    button.textContent = "HOW TO INSTALL";
+    message.textContent =
+      "The game download running now is the one-time download. To keep GTA Browser on this device, open your browser menu and choose Install app or Add to Home Screen; after setup, the locally stored game can be played offline.";
+  }
+}
+
+function showPwaInstallPromo() {
+  if (
+    isStandalonePwa() ||
+    window.localStorage.getItem(PWA_INSTALLED_KEY) === "1"
+  ) {
+    return;
+  }
+
+  const promo = document.getElementById("pwa-install-promo");
+  if (!promo) return;
+
+  pwaInstallPromoShownThisSession = true;
+  updatePwaInstallPromoAction();
+  promo.classList.add("is-visible");
+  promo.setAttribute("aria-hidden", "false");
+
+  if (pwaInstallHideTimer) window.clearTimeout(pwaInstallHideTimer);
+  pwaInstallHideTimer = window.setTimeout(() => {
+    hidePwaInstallPromo();
+  }, 7000);
+}
+
+function schedulePwaInstallPromo() {
+  if (
+    pwaInstallPromoShownThisSession ||
+    isStandalonePwa() ||
+    window.localStorage.getItem(PWA_INSTALLED_KEY) === "1"
+  ) {
+    return;
+  }
+
+  if (pwaInstallShowTimer) window.clearTimeout(pwaInstallShowTimer);
+  pwaInstallShowTimer = window.setTimeout(() => {
+    pwaInstallShowTimer = null;
+    showPwaInstallPromo();
+  }, 10000);
+}
+
+function cancelPwaInstallPromo({ hide = false } = {}) {
+  if (pwaInstallShowTimer) {
+    window.clearTimeout(pwaInstallShowTimer);
+    pwaInstallShowTimer = null;
+  }
+  if (hide) hidePwaInstallPromo();
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredPwaInstallPrompt = event;
+  updatePwaInstallPromoAction();
+});
+
+window.addEventListener("appinstalled", () => {
+  window.localStorage.setItem(PWA_INSTALLED_KEY, "1");
+  deferredPwaInstallPrompt = null;
+  clearPwaInstallTimers();
+  hidePwaInstallPromo();
+});
+
+
 const LEGACY_SCRIPT_SOURCES = [
   `${BASE}GamepadEmulator.js`,
   `${BASE}jsdos-cloud-sdk.js`,
@@ -297,6 +408,9 @@ async function initSetupFlow() {
   const selectedFileName = document.getElementById("selected-file-name");
   const clickToPlayButton = document.getElementById("click-to-play-button");
   const resetBtn = document.getElementById("reset-game-btn");
+  const pwaInstallPromo = document.getElementById("pwa-install-promo");
+  const pwaInstallButton = document.getElementById("pwa-install-button");
+  const pwaInstallClose = document.getElementById("pwa-install-close");
 
   if (
     !overlay ||
@@ -312,6 +426,34 @@ async function initSetupFlow() {
     !clickToPlayButton
   ) {
     return;
+  }
+
+  if (pwaInstallClose) {
+    pwaInstallClose.addEventListener("click", () => {
+      clearPwaInstallTimers();
+      hidePwaInstallPromo();
+    });
+  }
+
+  if (pwaInstallButton) {
+    pwaInstallButton.addEventListener("click", async () => {
+      if (!deferredPwaInstallPrompt) {
+        updatePwaInstallPromoAction();
+        return;
+      }
+
+      const promptEvent = deferredPwaInstallPrompt;
+      deferredPwaInstallPrompt = null;
+
+      try {
+        await promptEvent.prompt();
+        await promptEvent.userChoice;
+      } catch (error) {
+        console.warn("[pwa] install prompt failed:", error);
+      }
+
+      hidePwaInstallPromo();
+    });
   }
 
   downloadLink.href = ASSET_RELEASE_URL;
@@ -359,7 +501,6 @@ async function initSetupFlow() {
     progress.classList.remove("hidden");
     if (progressTitle) progressTitle.textContent = "LOADING...";
     progressLabel.textContent = "Preparing game files…";
-    displayedProgressPct = 0;
     progressPercent.textContent = "0%";
     progressBar.style.width = "0%";
     if (progressFile) {
@@ -387,8 +528,11 @@ async function initSetupFlow() {
     let downloadStartTime = null;
     let lastPhase = null;
     let displayedProgressPct = 0;
+    progressBar.style.width = "0%";
+    progressPercent.textContent = "0%";
 
     const onInstallError = (message) => {
+      cancelPwaInstallPromo({ hide: true });
       if (tipInterval) clearInterval(tipInterval);
       progress.classList.add("hidden");
       showError(message);
@@ -426,6 +570,7 @@ async function initSetupFlow() {
         }
 
         if (msg.type === "done") {
+          cancelPwaInstallPromo({ hide: true });
           if (tipInterval) clearInterval(tipInterval);
           progressBar.style.width = "100%";
           progressPercent.textContent = "100%";
@@ -555,6 +700,7 @@ async function initSetupFlow() {
     document.body.classList.add("vc-game-shell-active");
     clickToPlayButton.disabled = true;
     clickToPlayButton.dataset.installMode = "";
+    schedulePwaInstallPromo();
 
     if (downloadUrl) {
       console.log("[setup] user triggered download from:", downloadUrl);
