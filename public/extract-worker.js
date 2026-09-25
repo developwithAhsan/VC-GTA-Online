@@ -281,10 +281,38 @@ async function getRemoteSize(url) {
 // Fetch a single byte range from the server.
 async function fetchRange(url, start, end) {
     const response = await fetch(url, { headers: { Range: `bytes=${start}-${end}` } });
-    if (!response.ok && response.status !== 206) {
-        throw new Error(`Download failed: HTTP ${response.status}`);
+
+    if (response.status === 206) {
+        return response;
     }
-    return response;
+
+    // Some proxies ignore Range and return the entire archive with HTTP 200.
+    // Never treat that as a valid chunk: doing so can cause repeated 700 MB
+    // transfers or corrupt a resumed temp file.
+    if (response.status === 200) {
+        try { await response.body?.cancel(); } catch (_) {}
+        const error = new Error('Server does not support byte-range downloads');
+        error.code = 'RANGE_UNSUPPORTED';
+        throw error;
+    }
+
+    throw new Error(`Download failed: HTTP ${response.status}`);
+}
+
+async function supportsByteRanges(url) {
+    try {
+        const response = await fetch(url, {
+            headers: { Range: 'bytes=0-0' },
+            cache: 'no-store',
+        });
+        const supported =
+            response.status === 206 &&
+            /^bytes\s+0-0\//i.test(response.headers.get('content-range') || '');
+        try { await response.body?.cancel(); } catch (_) {}
+        return supported;
+    } catch (_) {
+        return false;
+    }
 }
 
 // MODE A: stream directly from network → decompress → OPFS.
@@ -293,52 +321,35 @@ async function fetchRange(url, start, end) {
 async function runStreamingDownload(url) {
     sendProgress({ type: 'progress', phase: 'downloading', pct: 0, loaded: 0, total: 0 }, true);
 
-    const CHUNK = 32 * 1024 * 1024; // 32 MB per range request
-    const total = await getRemoteSize(url);
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok || !response.body) {
+        throw new Error(`Download failed: HTTP ${response.status}`);
+    }
+
+    const headerTotal = parseInt(response.headers.get('content-length') || '0', 10);
+    const total = Number.isFinite(headerTotal) ? headerTotal : 0;
     let loaded = 0;
 
-    // Build a ReadableStream that stitches together sequential Range requests.
-    const chunkedStream = new ReadableStream({
-        async start(controller) {
-            try {
-                if (total > 0) {
-                    let offset = 0;
-                    while (offset < total) {
-                        const end = Math.min(offset + CHUNK - 1, total - 1);
-                        const resp = await fetchRange(url, offset, end);
-                        const reader = resp.body.getReader();
-                        while (true) {
-                            const { done, value } = await reader.read();
-                            if (done) break;
-                            loaded += value.byteLength;
-                            const pct = Math.min(Math.round((loaded / total) * 65), 65);
-                            sendProgress({ type: 'progress', phase: 'downloading', pct, loaded, total });
-                            controller.enqueue(value);
-                        }
-                        offset += CHUNK;
-                    }
-                } else {
-                    // Size unknown — fall back to a single streaming request
-                    const resp = await fetch(url);
-                    if (!resp.ok) { controller.error(new Error(`Download failed: HTTP ${resp.status}`)); return; }
-                    const reader = resp.body.getReader();
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        loaded += value.byteLength;
-                        sendProgress({ type: 'progress', phase: 'downloading', pct: 0, loaded, total: 0 });
-                        controller.enqueue(value);
-                    }
-                }
-                controller.close();
-            } catch (err) {
-                controller.error(err);
-            }
+    // One network request only. The compressed response is consumed by
+    // DecompressionStream while it is still arriving, so download and
+    // extraction overlap without storing a second 700 MB temp copy.
+    const trackedStream = response.body.pipeThrough(new TransformStream({
+        transform(chunk, controller) {
+            loaded += chunk.byteLength;
+            const pct = total > 0 ? Math.min(Math.round((loaded / total) * 65), 65) : 0;
+            sendProgress({
+                type: 'progress',
+                phase: 'downloading',
+                pct,
+                loaded,
+                total,
+                streaming: true,
+            });
+            controller.enqueue(chunk);
         }
-    });
+    }));
 
-    sendProgress({ type: 'progress', phase: 'extracting', pct: 65, done: 0, total: 0, file: '' }, true);
-    await extractFromStream(chunkedStream, 0);
+    await extractFromStream(trackedStream, 0);
 }
 
 // MODE B: download to OPFS temp file in 32 MB chunks, then extract.
@@ -429,27 +440,36 @@ self.onmessage = async (event) => {
 
         // ── URL MODE ────────────────────────────────────────────────────────
 
-        // Check for a valid partial download from a previous attempt
+        // Check for a valid partial download from a previous attempt.
         const meta = await getTempMeta();
         const urlMatches = meta && meta.url === url;
         const partialSize = urlMatches ? await getTempDataSize() : 0;
 
         if (!urlMatches && meta) {
-            // Stale meta from a different URL — discard
             await cleanupTemp();
         }
 
-        if (partialSize > 0) {
-            // We have a partial download — always use temp file path to resume it
-            await runTempFileDownload(url, partialSize, meta.total || 0);
+        const total = (urlMatches && meta?.total) || await getRemoteSize(url);
+        const rangeSupported = await supportsByteRanges(url);
+
+        if (partialSize > 0 && rangeSupported) {
+            // True HTTP byte ranges are available, so a partial temp download
+            // can be resumed safely.
+            await runTempFileDownload(url, partialSize, total || 0);
         } else {
-            // Fresh download — decide based on available storage
-            const canCache = await hasEnoughStorageForTemp();
+            if (partialSize > 0) {
+                // The current server cannot resume byte ranges. A partial temp
+                // file must not be appended with a fresh full response.
+                await cleanupTemp();
+            }
+
+            const canCache = rangeSupported && await hasEnoughStorageForTemp();
             if (canCache) {
-                await runTempFileDownload(url, 0, 0);
+                // Range-capable sources retain resumable temp-file mode.
+                await runTempFileDownload(url, 0, total || 0);
             } else {
-                // Not enough free space for a 700 MB temp file — stream directly
-                // This avoids QuotaExceededError crashes on low-storage devices.
+                // Current Cloudflare archive proxy does not support Range.
+                // Use one continuous network stream and extract concurrently.
                 await runStreamingDownload(url);
             }
         }
