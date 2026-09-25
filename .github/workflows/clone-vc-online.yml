@@ -22,24 +22,18 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/developwithAhsan/vc-online.git /tmp/vc-online-source
 
-      - name: Replace target contents with source snapshot
+      - name: Copy exact source snapshot
         run: |
-          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -a /tmp/vc-online-source/. .
-          rm -rf .git
-          cp -a /tmp/vc-online-source/.git /tmp/source-git-backup
-          rm -rf .git
-        shell: bash
+          rsync -a --delete --exclude='.git' /tmp/vc-online-source/ ./
 
-      - name: Restore target Git metadata and commit
+      - name: Commit cloned snapshot
         run: |
-          git_dir="$(pwd)/.git"
-          if [ ! -d "$git_dir" ]; then
-            echo "Target .git directory was removed unexpectedly."
-            exit 1
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "Clone vc-online into VC-GTA-Online" || exit 0
+          if git diff --cached --quiet; then
+            echo "Target already matches source."
+            exit 0
+          fi
+          git commit -m "Clone vc-online into VC-GTA-Online"
           git push origin HEAD:main
