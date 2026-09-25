@@ -348,7 +348,7 @@ async function initSetupFlow() {
   const setupInstallButton = (isRetry = false) => {
     clickToPlayButton.disabled = false;
     clickToPlayButton.classList.remove("disabled");
-    clickToPlayButton.textContent = isRetry ? "RETRY INSTALL" : "INSTALL GAME";
+    clickToPlayButton.textContent = isRetry ? "TRY AGAIN" : "PLAY GAME";
     clickToPlayButton.dataset.installMode = "1";
     clickToPlayButton.addEventListener("click", startInstall, { once: true });
   };
@@ -564,7 +564,7 @@ async function initSetupFlow() {
     }
   };
 
-  // Repurpose the PLAY button as INSTALL GAME until game files are present
+  // Keep the user-facing button labeled PLAY GAME; first-time setup starts behind it when needed
   setupInstallButton(false);
 
   // File picker fallback (used when no download URL is configured)
