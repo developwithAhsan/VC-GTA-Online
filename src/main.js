@@ -510,23 +510,9 @@ async function initSetupFlow() {
   // Game not installed — show install button and wait for user to click
   setStorageStatus("Click INSTALL GAME to set up (~701 MB, one-time)", "missing");
 
-  const DEFAULT_ARCHIVE_URL = 'https://archive.org/download/gta-vicecity-wasm-assets/vc-assets.tar.gz';
-  const hasCustomUrl = import.meta.env.VITE_ASSET_URL && import.meta.env.VITE_ASSET_URL !== DEFAULT_ARCHIVE_URL;
-
-  let downloadUrl = null;
-  if (ASSET_RELEASE_URL) {
-    if (hasCustomUrl) {
-      // Custom URL (e.g. Cloudflare Worker) — use it directly in all environments
-      downloadUrl = import.meta.env.VITE_ASSET_URL;
-    } else if (import.meta.env.DEV) {
-      // Dev only: proxy archive.org through Vite to avoid CORS
-      downloadUrl = `${BASE}proxy-game-download/game.tar.gz`;
-    } else if (__IS_VERCEL__ || __IS_REPLIT__) {
-      downloadUrl = `/api/proxy`;
-    } else {
-      downloadUrl = null; // fall back to file picker
-    }
-  }
+  // Use one hosting-independent asset source in every environment.
+  // Override it with VITE_ASSET_URL when needed.
+  const downloadUrl = ASSET_RELEASE_URL;
 
   const startInstall = async () => {
     if (clickToPlayButton.dataset.installMode !== "1") return;

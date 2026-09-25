@@ -1,1 +1,0 @@
-- [Blog SEO build](blog-seo-build.md) — 22 blog posts written in public/blog/, blog CSS at blog.css, all use canonical JS snippet and Article schema.

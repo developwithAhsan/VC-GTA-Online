@@ -1,12 +1,10 @@
-#vc — Play Free in Browser (WebAssembly Port)
+# VC GTA Online — Play Free in Browser (WebAssembly Port)
 
 > **Play vc** — no download, no install required. The full game runs entirely in your browser via WebAssembly. Works on desktop and mobile.
 
-[![Live Demo](https://img.shields.io/badge/Play%20Now-Live%20Demo-ff2870?style=for-the-badge)](https://joncodeofficial.github.io/gta-vice-city-wasm/)
 [![WebAssembly](https://img.shields.io/badge/Powered%20By-WebAssembly-654ff0?style=for-the-badge&logo=webassembly)](https://webassembly.org/)
 [![Platform](https://img.shields.io/badge/Platform-Browser%20%7C%20Mobile-00d2ff?style=for-the-badge)](#browser-support)
 
-**🎮 [Play GTA Vice City Online Now →](https://joncodeofficial.github.io/gta-vice-city-wasm/)**
 
 ---
 
@@ -37,7 +35,6 @@ Game files (~701 MB) are downloaded once and stored permanently in your browser'
 
 ## Play Now
 
-**Live:** [joncodeofficial.github.io/gta-vice-city-wasm](https://joncodeofficial.github.io/gta-vice-city-wasm/)
 
 | Browser | Desktop | Mobile |
 |---------|---------|--------|
@@ -160,8 +157,8 @@ Type any cheat during gameplay on desktop, or tap the cheat button on mobile:
 ### Setup
 
 ```bash
-git clone https://github.com/joncodeofficial/gta-vice-city-wasm.git
-cd gta-vice-city-wasm
+git clone https://github.com/developwithAhsan/VC-GTA-Online.git
+cd VC-GTA-Online
 pnpm install
 pnpm dev
 ```
@@ -255,7 +252,7 @@ Yes. Once the game files are cached in OPFS, the Service Worker serves everythin
 ## Credits
 
 **Browser client port** (OPFS storage, Service Worker, UI, auto-download, mobile touch controls):
-[@joncodeofficial](https://github.com/developwithAhsan)
+[@developwithAhsan](https://github.com/developwithAhsan)
 
 **Based on** [reVCDOS](https://github.com/Lolendor/reVCDOS) by [@Lolendor](https://github.com/Lolendor)
 
