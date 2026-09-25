@@ -22,9 +22,9 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/developwithAhsan/vc-online.git /tmp/vc-online-source
 
-      - name: Copy exact source snapshot
+      - name: Copy exact source snapshot except workflow files
         run: |
-          rsync -a --delete --exclude='.git' /tmp/vc-online-source/ ./
+          rsync -a --delete --exclude='.git' --exclude='.github/workflows/' /tmp/vc-online-source/ ./
 
       - name: Commit cloned snapshot
         run: |
@@ -32,8 +32,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then
-            echo "Target already matches source."
+            echo "Target already matches source outside workflow files."
             exit 0
           fi
-          git commit -m "Clone vc-online into VC-GTA-Online"
+          git commit -m "Clone vc-online files into VC-GTA-Online"
           git push origin HEAD:main
