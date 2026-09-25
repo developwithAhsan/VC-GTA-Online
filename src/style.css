@@ -3103,3 +3103,20 @@ body.vc-tool-open #setup-progress:not(.hidden) {
   }
 }
 
+
+
+/* GTAbrowser mobile motion budget: retain the visual identity without
+   continuously animating large blurred backgrounds on small screens. */
+@media (max-width: 720px) {
+  .page-wrap { animation: none; }
+  .vc-header::before {
+    animation-duration: 28s;
+    filter: blur(20px);
+    opacity: .54;
+  }
+  .vc-game-card::before,
+  .vc-section::before,
+  .vc-sidebar-card::before {
+    animation-duration: 14s;
+  }
+}
