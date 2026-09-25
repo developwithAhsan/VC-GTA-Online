@@ -2766,3 +2766,340 @@ body.vc-tool-open #setup-progress:not(.hidden) {
 #vc-game-cheats-panel.is-open {
   z-index: 10130;
 }
+
+/* ─── GTAbrowser motion identity v1 ─────────────────────────
+   Visual-only layer: no gameplay/layout hooks are changed. */
+:root {
+  --motion-cyan: #42e8ff;
+  --motion-blue: #628cff;
+  --motion-violet: #9c6cff;
+  --motion-pink: #ff4fb8;
+  --motion-rose: #ff79ce;
+}
+
+.page-wrap {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(66, 232, 255, .075), transparent 28%),
+    radial-gradient(circle at 88% 20%, rgba(255, 79, 184, .07), transparent 30%),
+    radial-gradient(circle at 52% 82%, rgba(156, 108, 255, .055), transparent 34%),
+    var(--bg);
+  background-size: 135% 135%, 145% 145%, 150% 150%, auto;
+  animation: vcAmbientShift 18s ease-in-out infinite alternate;
+}
+
+.vc-header {
+  isolation: isolate;
+  border-bottom-color: rgba(86, 128, 174, .5);
+}
+
+.vc-header::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -45% -15%;
+  pointer-events: none;
+  background:
+    conic-gradient(
+      from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(66, 232, 255, .15) 64deg,
+      transparent 120deg,
+      rgba(156, 108, 255, .13) 190deg,
+      transparent 245deg,
+      rgba(255, 79, 184, .16) 314deg,
+      transparent 360deg
+    );
+  filter: blur(28px);
+  opacity: .78;
+  transform-origin: 50% 50%;
+  animation: vcHeaderAura 16s linear infinite;
+}
+
+.vc-header::after {
+  width: min(420px, 66%);
+  height: 2px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--motion-cyan) 18%,
+      var(--motion-violet) 48%,
+      var(--motion-pink) 72%,
+      transparent 100%
+    );
+  background-size: 220% 100%;
+  box-shadow:
+    0 0 10px rgba(66, 232, 255, .35),
+    0 0 22px rgba(255, 79, 184, .28);
+  animation: vcHeaderSweep 5.5s ease-in-out infinite;
+}
+
+.vc-title {
+  isolation: isolate;
+  transform-origin: 50% 60%;
+  animation: vcTitleFloat 5s ease-in-out infinite;
+}
+
+.vc-title::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 6% -8% 0;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at center, rgba(102, 219, 255, .16), transparent 64%);
+  filter: blur(14px);
+  opacity: .72;
+  animation: vcTitleHalo 4.8s ease-in-out infinite alternate;
+}
+
+.vc-title-gta,
+.vc-title-vc {
+  display: inline-block;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  background-size: 320% 320%;
+  will-change: background-position, filter;
+}
+
+.vc-title-gta {
+  background-image: linear-gradient(
+    115deg,
+    #f8fbff 0%,
+    var(--motion-cyan) 20%,
+    #ffffff 38%,
+    var(--motion-violet) 55%,
+    var(--motion-pink) 76%,
+    #f8fbff 100%
+  );
+  filter:
+    drop-shadow(0 0 9px rgba(66, 232, 255, .24))
+    drop-shadow(0 8px 14px rgba(0, 0, 0, .32));
+  animation: vcTitleFlow 7s ease-in-out infinite;
+}
+
+.vc-title-vc {
+  background-image: linear-gradient(
+    115deg,
+    var(--motion-pink) 0%,
+    var(--motion-violet) 22%,
+    var(--motion-cyan) 45%,
+    #ffffff 62%,
+    var(--motion-rose) 82%,
+    var(--motion-pink) 100%
+  );
+  filter:
+    drop-shadow(0 0 12px rgba(255, 79, 184, .34))
+    drop-shadow(0 8px 14px rgba(0, 0, 0, .30));
+  animation: vcTitleFlowReverse 7s ease-in-out infinite;
+}
+
+.vc-game-card,
+.vc-section,
+.vc-sidebar-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform .28s ease,
+    border-color .28s ease,
+    box-shadow .28s ease,
+    background-color .28s ease;
+  animation: vcPanelReveal .55s ease both;
+}
+
+.vc-game-card::before,
+.vc-section::before,
+.vc-sidebar-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(66, 232, 255, .72),
+    rgba(156, 108, 255, .52),
+    rgba(255, 79, 184, .68),
+    transparent
+  );
+  background-size: 220% 100%;
+  opacity: .42;
+  animation: vcPanelEdge 9s linear infinite;
+}
+
+.vc-btn-play:not(:disabled),
+.vc-btn-secondary {
+  position: relative;
+  overflow: hidden;
+  background-image:
+    linear-gradient(
+      110deg,
+      rgba(66, 232, 255, .055),
+      rgba(156, 108, 255, .10),
+      rgba(255, 79, 184, .07),
+      rgba(66, 232, 255, .055)
+    );
+  background-size: 240% 100%;
+  transition:
+    transform .22s ease,
+    box-shadow .22s ease,
+    border-color .22s ease,
+    background-position .35s ease;
+}
+
+.vc-btn-play:not(:disabled) {
+  animation:
+    play-pulse 2.5s ease-in-out infinite,
+    vcButtonFlow 7s linear infinite;
+}
+
+.vc-btn-secondary {
+  animation: vcButtonFlow 10s linear infinite;
+}
+
+.vc-section-title,
+.vc-sidebar-title {
+  position: relative;
+  overflow: hidden;
+}
+
+.vc-section-title::after,
+.vc-sidebar-title::after {
+  content: "";
+  position: absolute;
+  left: -42%;
+  bottom: -1px;
+  width: 34%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--motion-cyan), var(--motion-pink), transparent);
+  filter: drop-shadow(0 0 4px rgba(66, 232, 255, .45));
+  animation: vcHeadingSweep 7.5s ease-in-out infinite;
+}
+
+.vc-sidebar-list li a,
+.vc-section a {
+  transition:
+    color .18s ease,
+    text-shadow .18s ease,
+    transform .18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .vc-game-card:hover,
+  .vc-section:hover,
+  .vc-sidebar-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(95, 157, 210, .62);
+    box-shadow:
+      0 14px 36px rgba(0, 0, 0, .18),
+      0 0 0 1px rgba(66, 232, 255, .035);
+  }
+
+  .vc-btn-play:not(:disabled):hover,
+  .vc-btn-secondary:hover {
+    transform: translateY(-2px);
+    border-color: rgba(97, 183, 226, .86);
+    box-shadow:
+      0 10px 24px rgba(0, 0, 0, .25),
+      0 0 22px rgba(66, 232, 255, .10),
+      0 0 26px rgba(255, 79, 184, .08);
+    background-position: 100% 50%;
+  }
+
+  .vc-sidebar-list li a:hover,
+  .vc-section a:hover {
+    color: #dff8ff;
+    text-shadow: 0 0 10px rgba(66, 232, 255, .22);
+  }
+}
+
+@keyframes vcAmbientShift {
+  0%   { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+  50%  { background-position: 12% 8%, 86% 14%, 42% 88%, 0 0; }
+  100% { background-position: 20% 14%, 74% 22%, 58% 80%, 0 0; }
+}
+
+@keyframes vcHeaderAura {
+  to { transform: rotate(360deg) scale(1.04); }
+}
+
+@keyframes vcHeaderSweep {
+  0%, 100% { background-position: 0% 50%; opacity: .65; }
+  50% { background-position: 100% 50%; opacity: 1; }
+}
+
+@keyframes vcTitleFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.012); }
+}
+
+@keyframes vcTitleHalo {
+  0% { transform: scale(.94); opacity: .44; }
+  100% { transform: scale(1.08); opacity: .82; }
+}
+
+@keyframes vcTitleFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes vcTitleFlowReverse {
+  0%, 100% { background-position: 100% 50%; }
+  50% { background-position: 0% 50%; }
+}
+
+@keyframes vcPanelReveal {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes vcPanelEdge {
+  from { background-position: 0% 50%; }
+  to { background-position: 220% 50%; }
+}
+
+@keyframes vcButtonFlow {
+  from { background-position: 0% 50%; }
+  to { background-position: 240% 50%; }
+}
+
+@keyframes vcHeadingSweep {
+  0%, 22% { transform: translateX(0); opacity: 0; }
+  38% { opacity: .75; }
+  72% { opacity: .75; }
+  88%, 100% { transform: translateX(430%); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-wrap,
+  .vc-header::before,
+  .vc-header::after,
+  .vc-title,
+  .vc-title::before,
+  .vc-title-gta,
+  .vc-title-vc,
+  .vc-game-card,
+  .vc-section,
+  .vc-sidebar-card,
+  .vc-game-card::before,
+  .vc-section::before,
+  .vc-sidebar-card::before,
+  .vc-btn-play:not(:disabled),
+  .vc-btn-secondary,
+  .vc-section-title::after,
+  .vc-sidebar-title::after {
+    animation: none !important;
+  }
+
+  .vc-game-card,
+  .vc-section,
+  .vc-sidebar-card,
+  .vc-btn-play,
+  .vc-btn-secondary {
+    transition-duration: .01ms !important;
+  }
+}
+
