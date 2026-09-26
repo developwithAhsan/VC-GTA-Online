@@ -3794,3 +3794,37 @@ body.gameIsStarted .pwa-install-promo {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
+
+
+/* True multi-touch W/S/A/D vehicle controls */
+.gameIsStarted[data-is-touch="1"] .touch-control.gas,
+.gameIsStarted[data-is-touch="1"] .touch-control.brake,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerLeft,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerRight {
+  touch-action: none !important;
+  -ms-touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: contain;
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.gas.is-touch-held {
+  background-color: rgba(30, 140, 55, 0.72) !important;
+  border-color: rgba(120, 255, 155, 0.92) !important;
+  transform: scale(.96);
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.brake.is-touch-held {
+  background-color: rgba(150, 38, 45, 0.72) !important;
+  border-color: rgba(255, 135, 135, 0.92) !important;
+  transform: scale(.96);
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.steerLeft.is-touch-held,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerRight.is-touch-held {
+  background-color: rgba(48, 108, 195, 0.72) !important;
+  border-color: rgba(185, 225, 255, 0.92) !important;
+  transform: scale(.96);
+}

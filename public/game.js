@@ -648,124 +648,113 @@ async function loadGame(data) {
         tapTarget: document.querySelector('.touch-control.car.getOut'),
     }]);
 
-    // Vehicle steering arrows — explicit left/right controls on mobile.
-    // They drive the same X axis as the movement joystick, so steering is analog-compatible.
-    const steerLeft = document.querySelector('.touch-control.steerLeft');
-    const steerRight = document.querySelector('.touch-control.steerRight');
-    let steerLeftHeld = false;
-    let steerRightHeld = false;
+    // Vehicle W/S/A/D touch pad — true multi-touch controller.
+    // Each finger is tracked independently, so accelerate/brake can stay held
+    // while steering left/right with another finger.
+    const vehicleTouchElements = {
+        gas: document.querySelector('.touch-control.gas'),
+        brake: document.querySelector('.touch-control.brake'),
+        left: document.querySelector('.touch-control.steerLeft'),
+        right: document.querySelector('.touch-control.steerRight'),
+    };
 
-    const updateSteeringAxis = () => {
-        let value = 0;
-        if (steerLeftHeld && !steerRightHeld) value = -1;
-        if (steerRightHeld && !steerLeftHeld) value = 1;
+    const vehicleTouchPointers = {
+        gas: new Set(),
+        brake: new Set(),
+        left: new Set(),
+        right: new Set(),
+    };
+
+    const vehiclePointerAction = new Map();
+
+    const applyVehicleTouchState = () => {
+        const gasHeld = vehicleTouchPointers.gas.size > 0;
+        const brakeHeld = vehicleTouchPointers.brake.size > 0;
+        const leftHeld = vehicleTouchPointers.left.size > 0;
+        const rightHeld = vehicleTouchPointers.right.size > 0;
+
         try {
-            emulator.MoveAxis(0, 0, value);
+            // Same emulated controller buttons already used by the game's
+            // contextual touch layout: Cross/A = accelerate, Square/X = brake.
+            emulator.PressButton(0, 0, gasHeld ? 1 : 0, gasHeld);
+            emulator.PressButton(0, 2, brakeHeld ? 1 : 0, brakeHeld);
+
+            // Left-stick X axis controls vehicle steering.
+            let steer = 0;
+            if (leftHeld && !rightHeld) steer = -1;
+            if (rightHeld && !leftHeld) steer = 1;
+            emulator.MoveAxis(0, 0, steer);
         } catch (error) {
-            console.warn('[touch steering] axis update skipped:', error);
+            console.warn('[vehicle multitouch] input update skipped:', error);
         }
     };
 
-    const bindSteeringButton = (element, side) => {
-        if (!element) return;
+    const releaseVehiclePointer = (pointerId) => {
+        const action = vehiclePointerAction.get(pointerId);
+        if (!action) return;
 
-        const press = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            try { element.setPointerCapture?.(event.pointerId); } catch (_) {}
-            if (side === 'left') steerLeftHeld = true;
-            else steerRightHeld = true;
-            updateSteeringAxis();
-        };
-
-        const release = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            if (side === 'left') steerLeftHeld = false;
-            else steerRightHeld = false;
-            updateSteeringAxis();
-            try { element.releasePointerCapture?.(event.pointerId); } catch (_) {}
-        };
-
-        element.addEventListener('pointerdown', press, { passive: false });
-        element.addEventListener('pointerup', release, { passive: false });
-        element.addEventListener('pointercancel', release, { passive: false });
-        element.addEventListener('lostpointercapture', () => {
-            if (side === 'left') steerLeftHeld = false;
-            else steerRightHeld = false;
-            updateSteeringAxis();
-        });
+        vehicleTouchPointers[action]?.delete(pointerId);
+        vehiclePointerAction.delete(pointerId);
+        applyVehicleTouchState();
     };
 
-    bindSteeringButton(steerLeft, 'left');
-    bindSteeringButton(steerRight, 'right');
-
-    // Vehicle pedals follow the same contextual controller buttons used by
-    // the original touch layout: Cross/A = sprint on foot / accelerate in car,
-    // Square/X = jump on foot / brake-reverse in car.
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 0,
-        lockTargetWhilePressed: true,
-        tapTarget: document.querySelector('.touch-control.gas'),
-    }]);
-
-    emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 2,
-        lockTargetWhilePressed: true,
-        tapTarget: document.querySelector('.touch-control.brake'),
-    }]);
-
-    // Reliable mobile pedal fallback: the game's vehicle bindings use W for
-    // accelerate and S for brake/reverse. Keep the emulated gamepad mapping
-    // above, but also hold the real browser key state while a pedal is pressed.
-    const bindVehiclePedalKey = (element, key, code, keyCode) => {
+    const bindVehicleMultiTouch = (element, action) => {
         if (!element) return;
 
-        let held = false;
-        const dispatchKey = (type) => {
-            const options = {
-                key,
-                code,
-                keyCode,
-                which: keyCode,
-                charCode: 0,
-                bubbles: true,
-                cancelable: true,
-                repeat: type === 'keydown' && held
-            };
-            document.dispatchEvent(new KeyboardEvent(type, options));
-        };
+        element.style.touchAction = 'none';
 
-        const press = (event) => {
+        element.addEventListener('pointerdown', (event) => {
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
             event.preventDefault();
             event.stopPropagation();
-            if (held) return;
-            held = true;
-            try { element.setPointerCapture?.(event.pointerId); } catch (_) {}
-            dispatchKey('keydown');
-        };
 
-        const release = (event) => {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
+            // A pointer can belong to only one vehicle action at a time.
+            releaseVehiclePointer(event.pointerId);
+            vehiclePointerAction.set(event.pointerId, action);
+            vehicleTouchPointers[action].add(event.pointerId);
+            element.classList.add('is-touch-held');
+            applyVehicleTouchState();
+        }, { passive: false });
+
+        const endPointer = (event) => {
+            if (!vehiclePointerAction.has(event.pointerId)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            releaseVehiclePointer(event.pointerId);
+            if (vehicleTouchPointers[action].size === 0) {
+                element.classList.remove('is-touch-held');
             }
-            if (!held) return;
-            held = false;
-            dispatchKey('keyup');
-            try { element.releasePointerCapture?.(event?.pointerId); } catch (_) {}
         };
 
-        element.addEventListener('pointerdown', press, { passive: false });
-        element.addEventListener('pointerup', release, { passive: false });
-        element.addEventListener('pointercancel', release, { passive: false });
-        element.addEventListener('lostpointercapture', release);
-        element.addEventListener('contextmenu', (event) => event.preventDefault());
-        window.addEventListener('blur', () => release());
+        element.addEventListener('pointerup', endPointer, { passive: false });
+        element.addEventListener('pointercancel', endPointer, { passive: false });
     };
 
-    bindVehiclePedalKey(document.querySelector('.touch-control.gas'), 'w', 'KeyW', 87);
-    bindVehiclePedalKey(document.querySelector('.touch-control.brake'), 's', 'KeyS', 83);
+    bindVehicleMultiTouch(vehicleTouchElements.gas, 'gas');
+    bindVehicleMultiTouch(vehicleTouchElements.brake, 'brake');
+    bindVehicleMultiTouch(vehicleTouchElements.left, 'left');
+    bindVehicleMultiTouch(vehicleTouchElements.right, 'right');
+
+    // Pointer-up is also listened for at document level so releasing a finger
+    // outside its original button cannot leave throttle/steering stuck.
+    const releaseVehiclePointerGlobally = (event) => {
+        const action = vehiclePointerAction.get(event.pointerId);
+        if (!action) return;
+        releaseVehiclePointer(event.pointerId);
+        if (vehicleTouchPointers[action].size === 0) {
+            vehicleTouchElements[action]?.classList.remove('is-touch-held');
+        }
+    };
+
+    document.addEventListener('pointerup', releaseVehiclePointerGlobally, { passive: true });
+    document.addEventListener('pointercancel', releaseVehiclePointerGlobally, { passive: true });
+
+    window.addEventListener('blur', () => {
+        vehiclePointerAction.clear();
+        Object.values(vehicleTouchPointers).forEach((set) => set.clear());
+        Object.values(vehicleTouchElements).forEach((element) => element?.classList.remove('is-touch-held'));
+        applyVehicleTouchState();
+    });
 
     // Visual joystick overlay
     setupVisualJoysticks();
