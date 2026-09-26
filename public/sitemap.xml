@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://gtabrowser.com/</loc></url>
-  <url><loc>https://gtabrowser.com/blog/</loc></url>
-  <url><loc>https://gtabrowser.com/blog/browser-opfs-storage-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/low-end-pc-performance-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/mobile-touch-controls-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/save-backup-restore-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/black-screen-loading-fix-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/30-vs-60-fps-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/controller-gamepad-setup-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/cheats-safe-save-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/mod-manager-zip-backup-guide.html</loc></url>
-  <url><loc>https://gtabrowser.com/blog/webassembly-opfs-service-worker-guide.html</loc></url>
+  <url><loc>https://gtabrowser.com/</loc><lastmod>2026-09-26</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/browser-opfs-storage-guide.html</loc><lastmod>2026-09-26</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/low-end-pc-performance-guide.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/mobile-touch-controls-guide.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/save-backup-restore-guide.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/black-screen-loading-fix-guide.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/30-vs-60-fps-guide.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/controller-gamepad-setup-guide.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/cheats-safe-save-guide.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/mod-manager-zip-backup-guide.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://gtabrowser.com/blog/webassembly-opfs-service-worker-guide.html</loc><lastmod>2026-09-25</lastmod></url>
   <url><loc>https://gtabrowser.com/privacy.html</loc><lastmod>2026-09-25</lastmod></url>
   <url><loc>https://gtabrowser.com/terms.html</loc><lastmod>2026-09-25</lastmod></url>
 </urlset>
