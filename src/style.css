@@ -3675,3 +3675,106 @@ body.gameIsStarted .pwa-install-promo {
     bottom: max(12px, env(safe-area-inset-bottom));
   }
 }
+
+
+/* ─── Mobile driving keycaps + browser safe-area alignment ─────────────── */
+/* Keep all existing touch-control wiring/icons intact while making the four
+   primary driving directions read like familiar keyboard keys. */
+.gameIsStarted[data-is-touch="1"] .touch-control.gas,
+.gameIsStarted[data-is-touch="1"] .touch-control.brake,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerLeft,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerRight {
+  background-image: none !important;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-weight: 900;
+  color: transparent;
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.gas::after,
+.gameIsStarted[data-is-touch="1"] .touch-control.brake::after,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerLeft::after,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerRight::after {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+  font-size: clamp(24px, 7vmin, 48px);
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: 0;
+  color: rgba(241, 248, 255, .96);
+  text-shadow: 0 2px 9px rgba(0,0,0,.55);
+  pointer-events: none;
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.gas::after { content: "W"; color: rgba(180,255,195,.98); }
+.gameIsStarted[data-is-touch="1"] .touch-control.brake::after { content: "S"; color: rgba(255,190,190,.98); }
+.gameIsStarted[data-is-touch="1"] .touch-control.steerLeft::after { content: "A"; }
+.gameIsStarted[data-is-touch="1"] .touch-control.steerRight::after { content: "D"; }
+
+/* Bottom controls stay above browser chrome / gesture bars. */
+.gameIsStarted[data-is-touch="1"] .touch-control.gas,
+.gameIsStarted[data-is-touch="1"] .touch-control.brake,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerLeft,
+.gameIsStarted[data-is-touch="1"] .touch-control.steerRight,
+.gameIsStarted[data-is-touch="1"] .touch-control.run,
+.gameIsStarted[data-is-touch="1"] .touch-control.jump {
+  bottom: max(5vmin, calc(env(safe-area-inset-bottom) + 10px));
+}
+
+/* Move top and upper-column controls one step down, below notches/browser bars. */
+.gameIsStarted[data-is-touch="1"] .touch-control.menu {
+  top: calc(5vmin + max(10px, env(safe-area-inset-top)));
+}
+
+.gameIsStarted[data-is-touch="1"] #tc-cheat-btn {
+  top: calc(19vmin + max(10px, env(safe-area-inset-top)));
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.car.getIn {
+  top: calc(21vmin + max(10px, env(safe-area-inset-top)));
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.fist {
+  top: calc(40vmin + max(10px, env(safe-area-inset-top)));
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.car.getOut,
+.gameIsStarted[data-is-touch="1"] .touch-control.camera,
+.gameIsStarted[data-is-touch="1"] .touch-control.horn,
+.gameIsStarted[data-is-touch="1"] .touch-control.weapon {
+  top: calc(5vmin + max(10px, env(safe-area-inset-top)));
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.drift {
+  top: calc(23vmin + max(10px, env(safe-area-inset-top)));
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.radio {
+  top: calc(3vmin + max(10px, env(safe-area-inset-top)));
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.mobile {
+  top: calc(33vmin + max(10px, env(safe-area-inset-top)));
+}
+
+.gameIsStarted[data-is-touch="1"] .touch-control.job {
+  top: calc(47vmin + max(10px, env(safe-area-inset-top)));
+}
+
+/* Armed-vehicle fire buttons remain one row above W/S pedals and clear of
+   bottom browser chrome. */
+.gameIsStarted[data-is-touch="1"] .touch-control.fireRight,
+.gameIsStarted[data-is-touch="1"] .touch-control.fireLeft {
+  bottom: max(25vmin, calc(env(safe-area-inset-bottom) + 22vmin));
+}
+
+/* Prevent touch HUD from being clipped by rounded/notched screens. */
+.touch-controls-wrapper {
+  padding:
+    max(0px, env(safe-area-inset-top))
+    max(0px, env(safe-area-inset-right))
+    max(0px, env(safe-area-inset-bottom))
+    max(0px, env(safe-area-inset-left));
+}
