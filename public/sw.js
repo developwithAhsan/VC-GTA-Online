@@ -5,6 +5,8 @@ const CORE_OFFLINE_ASSETS = [
     '/index.html',
     '/manifest.webmanifest',
     '/favicon.svg',
+    '/app-icon-192.svg',
+    '/app-icon-512.svg',
     '/icon.webp',
     '/GamepadEmulator.js',
     '/jsdos-cloud-sdk.js',

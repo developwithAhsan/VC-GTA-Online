@@ -7,11 +7,13 @@ const ASSET_RELEASE_URL = import.meta.env.VITE_ASSET_URL || "https://gta-proxy.e
 
 const BASE = import.meta.env.BASE_URL;
 
-const PWA_INSTALLED_KEY = "gtabrowser:pwa-installed";
+const PWA_PROMO_DELAY_MS = 6000;
+const PWA_PROMO_VISIBLE_MS = 7000;
 let deferredPwaInstallPrompt = null;
 let pwaInstallShowTimer = null;
 let pwaInstallHideTimer = null;
 let pwaInstallPromoShownThisSession = false;
+let pwaInstallDelayElapsed = false;
 
 function isStandalonePwa() {
   return (
@@ -51,11 +53,11 @@ function updatePwaInstallPromoAction() {
 
 function showPwaInstallPromo() {
   if (
+    !pwaInstallDelayElapsed ||
     !deferredPwaInstallPrompt ||
     isStandalonePwa() ||
     document.body.classList.contains("vc-game-shell-active") ||
-    document.body.classList.contains("gameIsStarted") ||
-    window.localStorage.getItem(PWA_INSTALLED_KEY) === "1"
+    document.body.classList.contains("gameIsStarted")
   ) {
     return;
   }
@@ -71,24 +73,19 @@ function showPwaInstallPromo() {
   if (pwaInstallHideTimer) window.clearTimeout(pwaInstallHideTimer);
   pwaInstallHideTimer = window.setTimeout(() => {
     hidePwaInstallPromo();
-  }, 7000);
+  }, PWA_PROMO_VISIBLE_MS);
 }
 
 function schedulePwaInstallPromo() {
-  if (
-    pwaInstallPromoShownThisSession ||
-    !deferredPwaInstallPrompt ||
-    isStandalonePwa() ||
-    window.localStorage.getItem(PWA_INSTALLED_KEY) === "1"
-  ) {
+  if (pwaInstallPromoShownThisSession || isStandalonePwa() || pwaInstallShowTimer) {
     return;
   }
 
-  if (pwaInstallShowTimer) window.clearTimeout(pwaInstallShowTimer);
   pwaInstallShowTimer = window.setTimeout(() => {
     pwaInstallShowTimer = null;
+    pwaInstallDelayElapsed = true;
     showPwaInstallPromo();
-  }, 1500);
+  }, PWA_PROMO_DELAY_MS);
 }
 
 function cancelPwaInstallPromo({ hide = false } = {}) {
@@ -103,15 +100,23 @@ window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   deferredPwaInstallPrompt = event;
   updatePwaInstallPromoAction();
-  schedulePwaInstallPromo();
+
+  if (pwaInstallDelayElapsed) {
+    showPwaInstallPromo();
+  }
 });
 
 window.addEventListener("appinstalled", () => {
-  window.localStorage.setItem(PWA_INSTALLED_KEY, "1");
   deferredPwaInstallPrompt = null;
   clearPwaInstallTimers();
   hidePwaInstallPromo();
 });
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", schedulePwaInstallPromo, { once: true });
+} else {
+  schedulePwaInstallPromo();
+}
 
 
 const LEGACY_SCRIPT_SOURCES = [
