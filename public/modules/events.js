@@ -814,7 +814,13 @@ var _emscripten_request_pointerlock = (target, deferUntilInEventHandler) => {
     }
     return requestPointerLock(target)
 };
-var getHeapMax = () => 2147483648;
+var getHeapMax = () => {
+    var configured = Number(Module["MAX_HEAP_BYTES"] || 0);
+    if (!Number.isFinite(configured) || configured <= 0) {
+        return 2147483648
+    }
+    return Math.min(2147483648, Math.max(268435456, configured))
+};
 var alignMemory = (size, alignment) => Math.ceil(size / alignment) * alignment;
 var growMemory = size => {
     var oldHeapSize = wasmMemory.buffer.byteLength;

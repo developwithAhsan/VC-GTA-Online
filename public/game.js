@@ -22,6 +22,20 @@ let maxFPS = parseInt(params.get('max_fps')) || 0;
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 let isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
+const deviceMemoryGB = Number(navigator.deviceMemory || 0);
+const jsHeapLimitBytes = Number(performance?.memory?.jsHeapSizeLimit || 0);
+const lowResourceDevice =
+    isMobile ||
+    (deviceMemoryGB > 0 && deviceMemoryGB <= 4) ||
+    (jsHeapLimitBytes > 0 && jsHeapLimitBytes < 1400 * 1024 * 1024);
+
+// A runaway 2 GB WebAssembly heap request can kill the whole Chrome renderer on
+// low-RAM devices before JavaScript gets a chance to show an error. Keep the
+// original ceiling on normal desktops and fail gracefully earlier on constrained devices.
+const safeHeapMaxBytes = lowResourceDevice
+    ? 1024 * 1024 * 1024
+    : 2147483648;
+
 // Respect the user's touch-controls preference from the settings toggle
 const _touchPref = localStorage.getItem('vcsky.touchControls');
 if (_touchPref === 'on') isTouch = true;
@@ -151,42 +165,20 @@ async function loadData() {
         throw new Error(`Failed to load data package: ${response.status} ${response.url}`);
     }
 
-    const reader = response.body.getReader();
-    let receivedLength = 0;
-
-    // Streaming/CDN responses can expose a transfer Content-Length that is
-    // smaller than the decoded body. Use a growable preallocated buffer so
-    // compressed responses cannot overflow it and unknown lengths do not force
-    // us to retain hundreds of individual chunks in memory.
-    const contentLength = parseInt(response.headers.get('content-length') || '0', 10);
-    let capacity = Math.max(contentLength || 0, dataSize || 0, 8 * 1024 * 1024);
-    let buffer = new Uint8Array(capacity);
-
-    const ensureCapacity = (required) => {
-        if (required <= buffer.length) return;
-        let nextSize = buffer.length;
-        while (nextSize < required) {
-            nextSize = Math.max(required, Math.ceil(nextSize * 1.5));
-        }
-        const next = new Uint8Array(nextSize);
-        next.set(buffer.subarray(0, receivedLength));
-        buffer = next;
-    };
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        ensureCapacity(receivedLength + value.length);
-        buffer.set(value, receivedLength);
-        receivedLength += value.length;
-
-        if (typeof setStatus === 'function') {
-            setStatus(`Downloading...(${receivedLength}/${dataSize})`);
-        }
+    // Let the browser assemble one exact-size ArrayBuffer instead of repeatedly
+    // reallocating large Uint8Arrays in JavaScript. This materially reduces peak
+    // memory pressure on low-RAM Chrome/Chromebook/mobile devices.
+    if (typeof setStatus === 'function') {
+        setStatus('Loading local game data…');
     }
 
-    return buffer.subarray(0, receivedLength);
+    const arrayBuffer = await response.arrayBuffer();
+
+    if (typeof setStatus === 'function') {
+        setStatus(`Downloading...(${arrayBuffer.byteLength}/${arrayBuffer.byteLength})`);
+    }
+
+    return new Uint8Array(arrayBuffer);
 };
 
 function setupVisualJoysticks() {
@@ -308,9 +300,11 @@ async function startGame(e) {
     if (loaderContainer) loaderContainer.style.display = 'flex';
     if (introContainer) introContainer.hidden = false;
 
-    // Play intro video — silently skip if autoplay is blocked (common on mobile)
-    if (intro) {
+    // Avoid video decoding while a large package is entering memory on constrained devices.
+    if (intro && !lowResourceDevice) {
         try { await intro.play(); } catch (_) { /* autoplay blocked — continue without video */ }
+    } else if (intro) {
+        try { intro.pause(); } catch (_) {}
     }
 
     // Load game data (130 MB from OPFS via Service Worker)
@@ -398,6 +392,8 @@ function showTransientGameError(message, duration = 2000) {
 }
 
 async function loadGame(data) {
+    let preloadedPackageBuffer = data.buffer;
+
     var Module = {
         mainCalled: () => {
             try {
@@ -422,7 +418,14 @@ async function loadGame(data) {
         print: (...args) => console.log(args.join(' ')),
         printErr: (...args) => console.error(args.join(' ')),
         getPreloadedPackage: () => {
-            return data.buffer;
+            const packageBuffer = preloadedPackageBuffer;
+            // The loader now owns the returned reference. Drop our extra
+            // closure reference on the next task so it can be reclaimed as soon
+            // as the package loader is finished with it.
+            window.setTimeout(() => {
+                preloadedPackageBuffer = null;
+            }, 0);
+            return packageBuffer;
         },
         canvas: function () {
             const canvas = document.getElementById('canvas');
@@ -440,6 +443,7 @@ async function loadGame(data) {
             return canvas;
         }(),
         setStatus,
+        MAX_HEAP_BYTES: safeHeapMaxBytes,
         totalDependencies: 0,
         monitorRunDependencies: (num) => {
             Module.totalDependencies = Math.max(Module.totalDependencies, num);
@@ -959,10 +963,13 @@ UNKNOWN_ACTION=
 
 const revc_ini = (() => {
     const cached = localStorage.getItem('vcsky.revc.ini');
-    if (cached) {
-        return cached;
+    let ini = cached || revc_iniDefault;
+
+    if (lowResourceDevice) {
+        ini = ini.replace(/FrameLimiter=0/g, 'FrameLimiter=1');
     }
-    return revc_iniDefault;
+
+    return ini;
 })();
 
 // ── Cheat keyboard ────────────────────────────────────────────────────────────
