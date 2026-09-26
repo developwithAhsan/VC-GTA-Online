@@ -7,8 +7,8 @@ const ASSET_RELEASE_URL = import.meta.env.VITE_ASSET_URL || "https://gta-proxy.e
 
 const BASE = import.meta.env.BASE_URL;
 
-const PWA_PROMO_DELAY_MS = 6000;
-const PWA_PROMO_VISIBLE_MS = 7000;
+const PWA_PROMO_DELAY_MS = 5500;
+const PWA_PROMO_VISIBLE_MS = 5000;
 let deferredPwaInstallPrompt = null;
 let pwaInstallShowTimer = null;
 let pwaInstallHideTimer = null;
@@ -48,13 +48,19 @@ function updatePwaInstallPromoAction() {
   const button = document.getElementById("pwa-install-button");
   if (!button) return;
   button.textContent = "INSTALL";
-  button.disabled = !deferredPwaInstallPrompt;
+  button.disabled = false;
+  button.dataset.installReady = deferredPwaInstallPrompt ? "1" : "0";
+  button.setAttribute(
+    "aria-label",
+    deferredPwaInstallPrompt
+      ? "Install GTA Browser"
+      : "Install GTA Browser when browser installation is available"
+  );
 }
 
 function showPwaInstallPromo() {
   if (
     !pwaInstallDelayElapsed ||
-    !deferredPwaInstallPrompt ||
     isStandalonePwa() ||
     document.body.classList.contains("vc-game-shell-active") ||
     document.body.classList.contains("gameIsStarted")
@@ -101,7 +107,7 @@ window.addEventListener("beforeinstallprompt", (event) => {
   deferredPwaInstallPrompt = event;
   updatePwaInstallPromoAction();
 
-  if (pwaInstallDelayElapsed) {
+  if (pwaInstallDelayElapsed && !pwaInstallPromoShownThisSession) {
     showPwaInstallPromo();
   }
 });
@@ -436,7 +442,17 @@ async function initSetupFlow() {
 
   if (pwaInstallButton) {
     pwaInstallButton.addEventListener("click", async () => {
-      if (!deferredPwaInstallPrompt) return;
+      const message = document.getElementById("pwa-install-message");
+
+      if (!deferredPwaInstallPrompt) {
+        if (message) {
+          message.textContent =
+            "One-time game download required. Your browser has not exposed its install dialog yet; use its Install App or Add to Home Screen option if available.";
+        }
+        if (pwaInstallHideTimer) window.clearTimeout(pwaInstallHideTimer);
+        pwaInstallHideTimer = window.setTimeout(hidePwaInstallPromo, 5000);
+        return;
+      }
 
       const promptEvent = deferredPwaInstallPrompt;
       deferredPwaInstallPrompt = null;

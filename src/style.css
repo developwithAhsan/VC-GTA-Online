@@ -3640,3 +3640,38 @@ body.gameIsStarted .pwa-install-promo {
 .crash-hint {
   display: none !important;
 }
+
+
+/* Reliable homepage install promo polish */
+.pwa-install-promo {
+  max-width: 390px;
+  padding: 16px 17px 15px;
+  border-color: rgba(96, 225, 255, 0.42);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.46),
+    0 0 28px rgba(81, 220, 255, 0.08),
+    inset 0 1px rgba(255,255,255,.05);
+}
+
+.pwa-install-eyebrow {
+  color: #8eeaff;
+}
+
+.pwa-install-button[data-install-ready="1"] {
+  box-shadow:
+    0 8px 22px rgba(81, 220, 255, .16),
+    0 0 0 1px rgba(255,255,255,.08) inset;
+}
+
+.pwa-install-button[data-install-ready="0"] {
+  opacity: .9;
+}
+
+@media (max-width: 520px) {
+  .pwa-install-promo {
+    left: 12px;
+    right: auto;
+    width: min(365px, calc(100vw - 24px));
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
