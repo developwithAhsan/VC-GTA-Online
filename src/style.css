@@ -3498,3 +3498,59 @@ body.gameIsStarted .pwa-install-promo {
   font-size: .82rem;
   line-height: 1.5;
 }
+
+
+/* ─── Vehicle steering arrows: explicit left-side steering controls ─────── */
+.touch-control.steerLeft,
+.touch-control.steerRight {
+  bottom: max(5vmin, env(safe-area-inset-bottom));
+  width: 17vmin;
+  height: 17vmin;
+  min-width: 58px;
+  min-height: 58px;
+  max-width: 100px;
+  max-height: 100px;
+  border-radius: 18px;
+  background-image: none;
+  background-color: rgba(12, 22, 42, 0.82);
+  border-color: rgba(140, 200, 255, 0.58);
+  color: rgba(225, 243, 255, 0.96);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: clamp(34px, 8vmin, 62px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  padding: 0 0 .08em;
+}
+
+.touch-control.steerLeft {
+  left: max(4vmin, env(safe-area-inset-left));
+}
+
+.touch-control.steerRight {
+  left: max(23vmin, calc(env(safe-area-inset-left) + 76px));
+}
+
+.touch-control.steerLeft::after,
+.touch-control.steerRight::after {
+  content: none;
+}
+
+.touch-control.steerLeft:active,
+.touch-control.steerRight:active {
+  background-color: rgba(42, 105, 190, 0.92);
+  border-color: rgba(190, 230, 255, 0.98);
+  box-shadow: 0 0 22px rgba(100, 170, 255, 0.52);
+}
+
+.gameIsStarted[data-is-touch="1"][data-state-car="1"][data-state-menu="0"][data-state-cutscene="0"] .touch-control.steerLeft,
+.gameIsStarted[data-is-touch="1"][data-state-car="1"][data-state-menu="0"][data-state-cutscene="0"] .touch-control.steerRight {
+  display: flex;
+}
+
+@media (orientation: portrait) {
+  .gameIsStarted[data-is-touch="1"] .touch-control.steerLeft,
+  .gameIsStarted[data-is-touch="1"] .touch-control.steerRight {
+    bottom: max(4vmin, env(safe-area-inset-bottom));
+  }
+}

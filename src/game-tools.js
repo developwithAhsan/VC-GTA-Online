@@ -369,8 +369,18 @@ function buildMorePanel() {
 
 async function toggleFullscreen() {
   closePanels();
+
   if (document.fullscreenElement) {
-    try { await document.exitFullscreen(); } catch (_) {}
+    if (globalThis.__vcExitFullscreen) {
+      await globalThis.__vcExitFullscreen();
+    } else {
+      try { await document.exitFullscreen(); } catch (_) {}
+    }
+    return;
+  }
+
+  if (globalThis.__vcEnterFullscreen) {
+    await globalThis.__vcEnterFullscreen(document.documentElement);
   } else if (document.documentElement.requestFullscreen) {
     try { await document.documentElement.requestFullscreen(); } catch (_) {}
   }
@@ -380,7 +390,11 @@ async function exitGame() {
   closePanels();
   closePointerLock();
   if (document.fullscreenElement) {
-    try { await document.exitFullscreen(); } catch (_) {}
+    if (globalThis.__vcExitFullscreen) {
+      await globalThis.__vcExitFullscreen();
+    } else {
+      try { await document.exitFullscreen(); } catch (_) {}
+    }
   }
   try {
     if (globalThis.Module && globalThis.Module.FS && globalThis.Module.FS.syncfs) {

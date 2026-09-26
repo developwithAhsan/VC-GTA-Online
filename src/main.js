@@ -755,11 +755,71 @@ function initHostRedirectGuard() {
   }
 }
 
+function hasTouchInput() {
+  return (
+    "ontouchstart" in window ||
+    Number(navigator.maxTouchPoints || 0) > 0 ||
+    window.matchMedia?.("(pointer: coarse)")?.matches === true
+  );
+}
+
+async function lockMobileLandscape() {
+  if (!hasTouchInput()) return false;
+  try {
+    if (screen.orientation?.lock) {
+      await screen.orientation.lock("landscape");
+      return true;
+    }
+  } catch (_) {
+    // Some browsers/OS versions do not permit orientation locking.
+  }
+  return false;
+}
+
+async function enterGameFullscreen(target = document.documentElement) {
+  try {
+    if (!document.fullscreenElement && target?.requestFullscreen) {
+      await target.requestFullscreen();
+    }
+  } catch (_) {
+    // Fullscreen can be denied by the browser; keep the page usable.
+  }
+
+  if (document.fullscreenElement) {
+    await lockMobileLandscape();
+  }
+
+  return Boolean(document.fullscreenElement);
+}
+
+async function exitGameFullscreen() {
+  try {
+    if (screen.orientation?.unlock) screen.orientation.unlock();
+  } catch (_) {}
+
+  if (document.fullscreenElement) {
+    try { await document.exitFullscreen(); } catch (_) {}
+  }
+}
+
+globalThis.__vcEnterFullscreen = enterGameFullscreen;
+globalThis.__vcExitFullscreen = exitGameFullscreen;
+globalThis.__vcLockLandscape = lockMobileLandscape;
+
 function initOrientationLock() {
+  document.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement && document.body.classList.contains("gameIsStarted")) {
+      void lockMobileLandscape();
+    } else if (!document.fullscreenElement) {
+      try {
+        if (screen.orientation?.unlock) screen.orientation.unlock();
+      } catch (_) {}
+    }
+  });
+
   const observer = new MutationObserver(() => {
-    if (document.body.classList.contains("gameIsStarted")) {
-      observer.disconnect();
-      screen.orientation?.lock("landscape").catch(() => {});
+    if (document.body.classList.contains("gameIsStarted") && document.fullscreenElement) {
+      void lockMobileLandscape();
     }
   });
   observer.observe(document.body, { attributeFilter: ["class"] });

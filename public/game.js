@@ -284,8 +284,13 @@ async function startGame(e) {
     document.body.classList.add('vc-game-shell-active');
     await resumeAudioContexts();
 
-    if (isTouch && document.documentElement.requestFullscreen) {
-        await document.documentElement.requestFullscreen().catch(() => {});
+    if (isTouch) {
+        if (globalThis.__vcEnterFullscreen) {
+            await globalThis.__vcEnterFullscreen(document.documentElement);
+        } else if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen().catch(() => {});
+            try { await screen.orientation?.lock?.('landscape'); } catch (_) {}
+        }
     }
 
     const startContainer = document.querySelector('.start-container');
@@ -623,6 +628,54 @@ async function loadGame(data) {
         lockTargetWhilePressed: false,
         tapTarget: document.querySelector('.touch-control.car.getOut'),
     }]);
+
+    // Vehicle steering arrows — explicit left/right controls on mobile.
+    // They drive the same X axis as the movement joystick, so steering is analog-compatible.
+    const steerLeft = document.querySelector('.touch-control.steerLeft');
+    const steerRight = document.querySelector('.touch-control.steerRight');
+    let steerLeftHeld = false;
+    let steerRightHeld = false;
+
+    const updateSteeringAxis = () => {
+        let value = 0;
+        if (steerLeftHeld && !steerRightHeld) value = -1;
+        if (steerRightHeld && !steerLeftHeld) value = 1;
+        emulator.MoveAxis(0, 0, value);
+    };
+
+    const bindSteeringButton = (element, side) => {
+        if (!element) return;
+
+        const press = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            try { element.setPointerCapture?.(event.pointerId); } catch (_) {}
+            if (side === 'left') steerLeftHeld = true;
+            else steerRightHeld = true;
+            updateSteeringAxis();
+        };
+
+        const release = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (side === 'left') steerLeftHeld = false;
+            else steerRightHeld = false;
+            updateSteeringAxis();
+            try { element.releasePointerCapture?.(event.pointerId); } catch (_) {}
+        };
+
+        element.addEventListener('pointerdown', press, { passive: false });
+        element.addEventListener('pointerup', release, { passive: false });
+        element.addEventListener('pointercancel', release, { passive: false });
+        element.addEventListener('lostpointercapture', () => {
+            if (side === 'left') steerLeftHeld = false;
+            else steerRightHeld = false;
+            updateSteeringAxis();
+        });
+    };
+
+    bindSteeringButton(steerLeft, 'left');
+    bindSteeringButton(steerRight, 'right');
 
     // Gas (accelerate) — DPad Up, held while pressed
     emulator.AddDisplayButtonEventListeners(0, [{

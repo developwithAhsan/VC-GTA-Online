@@ -620,6 +620,8 @@
       <div class="touch-control camera"></div>
       <div class="touch-control horn"></div>
       <div class="touch-control drift"></div>
+      <button type="button" class="touch-control steerLeft" aria-label="Steer vehicle left" title="Steer Left">‹</button>
+      <button type="button" class="touch-control steerRight" aria-label="Steer vehicle right" title="Steer Right">›</button>
 
       <!-- Contextual -->
       <div class="touch-control mobile"></div>
@@ -688,7 +690,13 @@
         if (fsBtn) {
           fsBtn.addEventListener('click', () => {
             if (document.fullscreenElement) {
-              document.exitFullscreen().catch(() => {});
+              if (globalThis.__vcExitFullscreen) {
+                void globalThis.__vcExitFullscreen();
+              } else {
+                document.exitFullscreen().catch(() => {});
+              }
+            } else if (globalThis.__vcEnterFullscreen) {
+              void globalThis.__vcEnterFullscreen(document.documentElement);
             } else {
               document.documentElement.requestFullscreen().catch(() => {});
             }
