@@ -3725,7 +3725,7 @@ body.gameIsStarted .pwa-install-promo {
 
 /* Move top and upper-column controls one step down, below notches/browser bars. */
 .gameIsStarted[data-is-touch="1"] .touch-control.menu {
-  top: calc(5vmin + max(18px, env(safe-area-inset-top)));
+  top: calc(5vmin + max(18px, env(safe-area-inset-top)) + 10px);
 }
 
 .gameIsStarted[data-is-touch="1"] #tc-cheat-btn {
@@ -3744,7 +3744,7 @@ body.gameIsStarted .pwa-install-promo {
 .gameIsStarted[data-is-touch="1"] .touch-control.camera,
 .gameIsStarted[data-is-touch="1"] .touch-control.horn,
 .gameIsStarted[data-is-touch="1"] .touch-control.weapon {
-  top: calc(5vmin + max(18px, env(safe-area-inset-top)));
+  top: calc(5vmin + max(18px, env(safe-area-inset-top)) + 10px);
 }
 
 .gameIsStarted[data-is-touch="1"] .touch-control.drift {
