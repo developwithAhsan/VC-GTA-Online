@@ -395,7 +395,6 @@ const VC_TIPS = [
 
 async function initSetupFlow() {
   const overlay = document.getElementById("setup-overlay");
-  const downloadLink = document.getElementById("dl-link");
   const fileInput = document.getElementById("game-file-input");
   const progress = document.getElementById("setup-progress");
   const progressBar = document.getElementById("setup-progress-bar");
@@ -415,7 +414,6 @@ async function initSetupFlow() {
 
   if (
     !overlay ||
-    !downloadLink ||
     !fileInput ||
     !progress ||
     !progressBar ||
@@ -453,8 +451,6 @@ async function initSetupFlow() {
       hidePwaInstallPromo();
     });
   }
-
-  downloadLink.href = ASSET_RELEASE_URL;
 
   const showError = (message) => {
     errorBox.classList.remove("hidden");

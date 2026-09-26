@@ -145,7 +145,7 @@
     <aside id="pwa-install-promo" class="pwa-install-promo" aria-hidden="true" aria-live="polite">
       <button id="pwa-install-close" class="pwa-install-close" type="button" aria-label="Close install suggestion">×</button>
       <div class="pwa-install-icon" aria-hidden="true">
-        <img src="/favicon.svg" alt="GTA Browser app icon" width="36" height="36" />
+        <img src="/favicon.svg" alt="GTA Browser app icon" title="GTA Browser app icon" width="36" height="36" loading="lazy" decoding="async" />
       </div>
       <div class="pwa-install-copy">
         <span class="pwa-install-eyebrow">OFFLINE PLAY</span>
@@ -191,7 +191,6 @@
           <div id="storage-status" class="vc-storage-status hidden" role="status" aria-live="polite">Checking local game files…</div>
 
           <!-- Hidden file picker elements (used when no auto-URL configured) -->
-          <a id="dl-link" class="hidden" href="#" download>Download game.tar.gz</a>
           <label class="file-picker hidden" for="game-file-input">
             <span class="file-picker-label">Select game.tar.gz</span>
             <span id="selected-file-name" class="file-picker-name">No file selected</span>
@@ -251,10 +250,10 @@
               <h2 class="vc-section-title">About Vice City Web Edition</h2>
               <div class="vc-about-gallery" id="vc-about-gallery" aria-label="GTA Vice City screenshots">
                 <div class="vc-about-stage">
-                  <img class="vc-about-slide is-active" src="/vc-gallery/vc-1.jpg" alt="Vice City Ocean Beach gameplay at night with scooter and neon hotels" loading="eager" decoding="async" fetchpriority="high" width="1456" height="822" />
-                  <img class="vc-about-slide" src="/vc-gallery/vc-2.webp" alt="Vice City street gameplay with police car and pedestrians" loading="lazy" decoding="async" width="1400" height="788" />
-                  <img class="vc-about-slide" src="/vc-gallery/vc-3.jpg" alt="Vice City sunset gameplay with Tommy beside a red car" loading="lazy" decoding="async" width="1200" height="675" />
-                  <img class="vc-about-slide" src="/vc-gallery/vc-4.jpg" alt="Vice City palm-lined boulevard with a blue sports car" loading="lazy" decoding="async" width="1600" height="900" />
+                  <img class="vc-about-slide is-active" src="/vc-gallery/vc-1.jpg" alt="GTA Vice City Ocean Beach gameplay at night with scooter and neon hotels" title="GTA Vice City Ocean Beach gameplay" loading="lazy" decoding="async" fetchpriority="low" width="1456" height="822" sizes="(max-width: 900px) 100vw, 760px" />
+                  <img class="vc-about-slide" src="/vc-gallery/vc-2.webp" alt="GTA Vice City street gameplay with police car and pedestrians" title="GTA Vice City street gameplay" loading="lazy" decoding="async" fetchpriority="low" width="1400" height="788" sizes="(max-width: 900px) 100vw, 760px" />
+                  <img class="vc-about-slide" src="/vc-gallery/vc-3.jpg" alt="GTA Vice City sunset gameplay with Tommy beside a red car" title="GTA Vice City sunset gameplay" loading="lazy" decoding="async" fetchpriority="low" width="1200" height="675" sizes="(max-width: 900px) 100vw, 760px" />
+                  <img class="vc-about-slide" src="/vc-gallery/vc-4.jpg" alt="GTA Vice City palm-lined boulevard with a blue sports car" title="GTA Vice City palm-lined boulevard gameplay" loading="lazy" decoding="async" fetchpriority="low" width="1600" height="900" sizes="(max-width: 900px) 100vw, 760px" />
                   <div class="vc-about-shade" aria-hidden="true"></div>
                   <button class="vc-about-nav vc-about-prev" type="button" aria-label="Previous Vice City screenshot">‹</button>
                   <button class="vc-about-nav vc-about-next" type="button" aria-label="Next Vice City screenshot">›</button>
@@ -366,21 +365,46 @@
         <!-- Discussion -->
         <section class="vc-section vc-discussion-section">
           <h2 class="vc-section-title">Discussion</h2>
-<div id="disqus_thread"></div>
+<div id="disqus_thread" aria-label="GTA Browser discussion comments"></div>
+<p id="disqus-lazy-note" class="vc-discussion-note">Comments load when you reach this section.</p>
 <script>
-  var disqus_config = function () {
-    this.page.url = "https://gtabrowser.com/";
-    this.page.identifier = "gtabrowser-home";
-  };
+(function () {
+  let loaded = false;
+  const section = document.querySelector(".vc-discussion-section");
+  const note = document.getElementById("disqus-lazy-note");
 
-  (function () {
-    var d = document, s = d.createElement("script");
+  function loadDisqus() {
+    if (loaded) return;
+    loaded = true;
+
+    window.disqus_config = function () {
+      this.page.url = "https://gtabrowser.com/";
+      this.page.identifier = "gtabrowser-home";
+    };
+
+    const s = document.createElement("script");
     s.src = "https://gtabrowser.disqus.com/embed.js";
+    s.async = true;
     s.setAttribute("data-timestamp", +new Date());
-    (d.head || d.body).appendChild(s);
-  })();
+    s.onload = () => { if (note) note.remove(); };
+    (document.head || document.body).appendChild(s);
+  }
+
+  if (!section) return;
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        observer.disconnect();
+        loadDisqus();
+      }
+    }, { rootMargin: "700px 0px" });
+    observer.observe(section);
+  } else {
+    window.setTimeout(loadDisqus, 3000);
+  }
+})();
 </script>
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
 
          
          
@@ -476,9 +500,6 @@
             <a href="https://www.instagram.com/ahsan0world" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="vc-social-link">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2c2.72 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47a4.9 4.9 0 0 1 1.77 1.15 4.9 4.9 0 0 1 1.15 1.77c.25.64.42 1.37.47 2.43.05 1.06.06 1.4.06 4.12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.77 4.9 4.9 0 0 1-1.77 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.4.06-4.12.06s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.77-1.15 4.9 4.9 0 0 1-1.15-1.77c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.72 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43a4.9 4.9 0 0 1 1.15-1.77A4.9 4.9 0 0 1 5.45.53C6.09.28 6.82.11 7.88.06 8.94.01 9.28 0 12 0Zm0 5.35a6.65 6.65 0 1 0 0 13.3 6.65 6.65 0 0 0 0-13.3ZM12 16.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm6.9-11.65a1.56 1.56 0 1 1-3.12 0 1.56 1.56 0 0 1 3.12 0Z"/></svg>
             </a>
-            <a href="https://www.linkedin.com/in/devwithahsan/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" class="vc-social-link">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.03-1.85-3.03-1.85 0-2.14 1.44-2.14 2.94v5.66H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.11 20.45H3.56V9h3.55v11.45ZM22.22 0H1.77C.8 0 0 .78 0 1.75v20.5C0 23.22.8 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.75V1.75C24 .78 23.2 0 22.22 0Z"/></svg>
-            </a>
             <a href="mailto:editingking.2977@gmail.com" aria-label="Email" class="vc-social-link">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M2 4h20c.55 0 1 .45 1 1v14c0 .55-.45 1-1 1H2c-.55 0-1-.45-1-1V5c0-.55.45-1 1-1Zm1.4 2 8.6 6.44L20.6 6H3.4Zm17.6 1.6-8.35 6.26a1 1 0 0 1-1.2 0L3.1 7.6V17.6h17.9V7.6Z"/></svg>
             </a>
@@ -541,23 +562,33 @@
     close.style.cursor = "pointer";
     close.style.zIndex = "2";
 
-    // Discord iframe
-    const iframe = document.createElement("iframe");
-    iframe.src = "https://discord.com/widget?id=1524742491486556260&theme=dark";
-    iframe.width = "350";
-    iframe.height = "500";
-    iframe.frameBorder = "0";
-    iframe.allowTransparency = "true";
-    iframe.sandbox = "allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts";
-    iframe.style.border = "0";
+    let iframe = null;
+
+    const ensureDiscordIframe = () => {
+      if (iframe) return;
+      iframe = document.createElement("iframe");
+      iframe.src = "https://discord.com/widget?id=1524742491486556260&theme=dark";
+      iframe.title = "GTA Browser Discord community";
+      iframe.width = "350";
+      iframe.height = "500";
+      iframe.loading = "lazy";
+      iframe.frameBorder = "0";
+      iframe.allowTransparency = "true";
+      iframe.sandbox = "allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts";
+      iframe.style.border = "0";
+      box.appendChild(iframe);
+    };
 
     box.appendChild(close);
-    box.appendChild(iframe);
 
     document.body.appendChild(btn);
     document.body.appendChild(box);
 
-    btn.onclick = () => box.style.display = box.style.display === "block" ? "none" : "block";
+    btn.onclick = () => {
+      const opening = box.style.display !== "block";
+      if (opening) ensureDiscordIframe();
+      box.style.display = opening ? "block" : "none";
+    };
     close.onclick = () => box.style.display = "none";
 })();
 </script>
