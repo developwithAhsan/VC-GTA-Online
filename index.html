@@ -103,16 +103,11 @@
       <span>Turn your device sideways for the best experience</span>
     </div>
 
-    <!-- Crash / fatal error overlay (shown when game fails after launching) -->
+    <!-- Non-blocking transient game error notice; auto-hides after a short delay. -->
     <div id="crash-overlay" class="crash-overlay hidden" role="alert" aria-live="assertive">
       <div class="crash-box">
         <p class="crash-title">⚠ Game Error</p>
-        <p class="crash-msg" id="crash-msg">The game encountered an error and cannot continue.</p>
-        <div class="crash-actions">
-          <button class="crash-btn crash-btn-primary" onclick="location.reload()">↺ Reload page</button>
-          <button class="crash-btn" onclick="document.getElementById('crash-overlay').classList.add('hidden')">Dismiss</button>
-        </div>
-        <p class="crash-hint">If this keeps happening, try setting FPS limit to 30 or use a different browser.</p>
+        <p class="crash-msg" id="crash-msg">A temporary game error occurred.</p>
       </div>
     </div>
 
@@ -620,8 +615,8 @@
       <div class="touch-control camera"></div>
       <div class="touch-control horn"></div>
       <div class="touch-control drift"></div>
-      <button type="button" class="touch-control steerLeft" aria-label="Steer vehicle left" title="Steer Left">‹</button>
-      <button type="button" class="touch-control steerRight" aria-label="Steer vehicle right" title="Steer Right">›</button>
+      <button type="button" class="touch-control steerLeft" aria-label="Steer vehicle left" title="Steer Left"></button>
+      <button type="button" class="touch-control steerRight" aria-label="Steer vehicle right" title="Steer Right"></button>
 
       <!-- Contextual -->
       <div class="touch-control mobile"></div>

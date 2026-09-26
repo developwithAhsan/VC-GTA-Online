@@ -376,6 +376,27 @@ function setStatus(text) {
     }
 };
 
+let transientGameErrorTimer = 0;
+function showTransientGameError(message, duration = 2000) {
+    const overlay = document.getElementById('crash-overlay');
+    const msgEl = document.getElementById('crash-msg');
+    if (!overlay) return;
+
+    const clean = String(message || 'A temporary game error occurred.')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 180);
+
+    if (msgEl) msgEl.textContent = clean;
+    overlay.classList.remove('hidden');
+
+    if (transientGameErrorTimer) window.clearTimeout(transientGameErrorTimer);
+    transientGameErrorTimer = window.setTimeout(() => {
+        overlay.classList.add('hidden');
+        transientGameErrorTimer = 0;
+    }, Math.max(1200, Number(duration) || 2000));
+}
+
 async function loadGame(data) {
     var Module = {
         mainCalled: () => {
@@ -406,8 +427,12 @@ async function loadGame(data) {
         canvas: function () {
             const canvas = document.getElementById('canvas');
             canvas.addEventListener('webglcontextlost', (e) => {
-                statusElement.textContent = 'WebGL context lost. Please reload the page.';
+                console.warn('[graphics] WebGL context lost');
                 e.preventDefault();
+                showTransientGameError('Graphics were interrupted. Trying to recover…');
+            });
+            canvas.addEventListener('webglcontextrestored', () => {
+                console.info('[graphics] WebGL context restored');
             });
             canvas.addEventListener('pointerdown', () => {
                 resumeAudioContexts();
@@ -434,27 +459,17 @@ async function loadGame(data) {
     };
     window.onerror = (message, source, lineno, colno, error) => {
         const text = error?.message || message || 'Unknown error';
-        Module.setStatus(`Error: ${text}`);
+        console.error('[game runtime]', text, source || '', lineno || '', colno || '');
         if (spinnerElement) spinnerElement.hidden = true;
-        // Show the crash overlay so the user knows what happened
-        const overlay = document.getElementById('crash-overlay');
-        const msgEl = document.getElementById('crash-msg');
-        if (overlay) {
-            if (msgEl) msgEl.textContent = text.length > 200 ? text.slice(0, 200) + '…' : text;
-            overlay.classList.remove('hidden');
-        }
+        showTransientGameError(text, 2000);
+        return true;
     };
     window.onunhandledrejection = (event) => {
         const text = event.reason?.message || String(event.reason) || 'Unknown error';
-        // Only surface WASM / game-critical errors (ignore minor async failures)
+        console.error('[game promise]', event.reason || text);
         if (text.includes('abort') || text.includes('OOM') || text.includes('out of memory') ||
             text.includes('WebAssembly') || text.includes('RuntimeError')) {
-            const overlay = document.getElementById('crash-overlay');
-            const msgEl = document.getElementById('crash-msg');
-            if (overlay) {
-                if (msgEl) msgEl.textContent = text.length > 200 ? text.slice(0, 200) + '…' : text;
-                overlay.classList.remove('hidden');
-            }
+            showTransientGameError(text, 2000);
         }
     };
     Module.arguments = window.location.search
@@ -640,7 +655,11 @@ async function loadGame(data) {
         let value = 0;
         if (steerLeftHeld && !steerRightHeld) value = -1;
         if (steerRightHeld && !steerLeftHeld) value = 1;
-        emulator.MoveAxis(0, 0, value);
+        try {
+            emulator.MoveAxis(0, 0, value);
+        } catch (error) {
+            console.warn('[touch steering] axis update skipped:', error);
+        }
     };
 
     const bindSteeringButton = (element, side) => {

@@ -452,9 +452,17 @@ async function initSetupFlow() {
     });
   }
 
-  const showError = (message) => {
+  let setupErrorHideTimer = 0;
+  const showError = (message, duration = 2400) => {
     errorBox.classList.remove("hidden");
     errorBox.textContent = message;
+
+    if (setupErrorHideTimer) window.clearTimeout(setupErrorHideTimer);
+    setupErrorHideTimer = window.setTimeout(() => {
+      errorBox.classList.add("hidden");
+      errorBox.textContent = "";
+      setupErrorHideTimer = 0;
+    }, Math.max(1500, Number(duration) || 2400));
   };
 
   const setStorageStatus = (message, state) => {
@@ -904,7 +912,11 @@ async function boot() {
     }
     if (errorBox) {
       errorBox.classList.remove("hidden");
-      errorBox.textContent = `Your browser is missing required features: ${missing.join(", ")}. Please use Chrome 110+, Firefox 111+, or Safari 16.4+.`;
+      errorBox.textContent = `Your browser is missing required features: ${missing.join(", ")}. Please use a current browser.`;
+      window.setTimeout(() => {
+        errorBox.classList.add("hidden");
+        errorBox.textContent = "";
+      }, 2600);
     }
     return;
   }
