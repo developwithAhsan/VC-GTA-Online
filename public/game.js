@@ -700,16 +700,17 @@ async function loadGame(data) {
     bindSteeringButton(steerLeft, 'left');
     bindSteeringButton(steerRight, 'right');
 
-    // Gas (accelerate) — DPad Up, held while pressed
+    // Vehicle pedals follow the same contextual controller buttons used by
+    // the original touch layout: Cross/A = sprint on foot / accelerate in car,
+    // Square/X = jump on foot / brake-reverse in car.
     emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 12,
+        buttonIndex: 0,
         lockTargetWhilePressed: true,
         tapTarget: document.querySelector('.touch-control.gas'),
     }]);
 
-    // Brake / reverse — DPad Down, held while pressed
     emulator.AddDisplayButtonEventListeners(0, [{
-        buttonIndex: 13,
+        buttonIndex: 2,
         lockTargetWhilePressed: true,
         tapTarget: document.querySelector('.touch-control.brake'),
     }]);
