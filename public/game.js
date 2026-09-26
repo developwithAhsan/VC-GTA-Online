@@ -715,6 +715,58 @@ async function loadGame(data) {
         tapTarget: document.querySelector('.touch-control.brake'),
     }]);
 
+    // Reliable mobile pedal fallback: the game's vehicle bindings use W for
+    // accelerate and S for brake/reverse. Keep the emulated gamepad mapping
+    // above, but also hold the real browser key state while a pedal is pressed.
+    const bindVehiclePedalKey = (element, key, code, keyCode) => {
+        if (!element) return;
+
+        let held = false;
+        const dispatchKey = (type) => {
+            const options = {
+                key,
+                code,
+                keyCode,
+                which: keyCode,
+                charCode: 0,
+                bubbles: true,
+                cancelable: true,
+                repeat: type === 'keydown' && held
+            };
+            document.dispatchEvent(new KeyboardEvent(type, options));
+        };
+
+        const press = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (held) return;
+            held = true;
+            try { element.setPointerCapture?.(event.pointerId); } catch (_) {}
+            dispatchKey('keydown');
+        };
+
+        const release = (event) => {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            if (!held) return;
+            held = false;
+            dispatchKey('keyup');
+            try { element.releasePointerCapture?.(event?.pointerId); } catch (_) {}
+        };
+
+        element.addEventListener('pointerdown', press, { passive: false });
+        element.addEventListener('pointerup', release, { passive: false });
+        element.addEventListener('pointercancel', release, { passive: false });
+        element.addEventListener('lostpointercapture', release);
+        element.addEventListener('contextmenu', (event) => event.preventDefault());
+        window.addEventListener('blur', () => release());
+    };
+
+    bindVehiclePedalKey(document.querySelector('.touch-control.gas'), 'w', 'KeyW', 87);
+    bindVehiclePedalKey(document.querySelector('.touch-control.brake'), 's', 'KeyS', 83);
+
     // Visual joystick overlay
     setupVisualJoysticks();
 }
@@ -1014,6 +1066,7 @@ const revc_ini = (() => {
             btn.className = 'cheat-key';
             btn.textContent = ch;
             btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 typed += ch;
                 updateDisplay();
@@ -1026,6 +1079,7 @@ const revc_ini = (() => {
         spBtn.className = 'cheat-key cheat-key-wide';
         spBtn.textContent = '⌫';
         spBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             typed = typed.slice(0, -1);
             updateDisplay();
@@ -1036,6 +1090,7 @@ const revc_ini = (() => {
         clrBtn.className = 'cheat-key cheat-key-wide';
         clrBtn.textContent = 'CLR';
         clrBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             typed = '';
             updateDisplay();
@@ -1043,15 +1098,36 @@ const revc_ini = (() => {
         keysContainer.appendChild(clrBtn);
     }
 
-    // Quick cheat buttons
+    // Quick cheat buttons: on mobile, one tap applies the cheat and closes
+    // the panel immediately so gameplay resumes without an extra close tap.
     document.querySelectorAll('[data-cheat]').forEach(btn => {
         btn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
             e.stopPropagation();
-            typed = btn.dataset.cheat;
+
+            const code = String(btn.dataset.cheat || '').trim().toUpperCase();
+            if (!code) return;
+
+            typed = code;
             updateDisplay();
-            sendCode(btn.dataset.cheat);
-            setTimeout(() => { typed = ''; updateDisplay(); }, 1500);
-        });
+            overlay.classList.add('hidden');
+
+            const canvas = document.getElementById('canvas');
+            try {
+                canvas?.setAttribute('tabindex', '-1');
+                canvas?.focus({ preventScroll: true });
+            } catch (_) {}
+
+            // Give the overlay one frame to close before feeding the cheat
+            // sequence to the game's normal keyboard-cheat path.
+            window.setTimeout(() => {
+                sendCode(code);
+                window.setTimeout(() => {
+                    typed = '';
+                    updateDisplay();
+                }, Math.max(900, code.length * 115));
+            }, 80);
+        }, { passive: false });
     });
 
     openBtn.addEventListener('pointerdown', (e) => {

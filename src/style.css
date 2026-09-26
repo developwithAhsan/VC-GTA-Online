@@ -3725,42 +3725,42 @@ body.gameIsStarted .pwa-install-promo {
 
 /* Move top and upper-column controls one step down, below notches/browser bars. */
 .gameIsStarted[data-is-touch="1"] .touch-control.menu {
-  top: calc(5vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(5vmin + max(18px, env(safe-area-inset-top)));
 }
 
 .gameIsStarted[data-is-touch="1"] #tc-cheat-btn {
-  top: calc(19vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(19vmin + max(18px, env(safe-area-inset-top)));
 }
 
 .gameIsStarted[data-is-touch="1"] .touch-control.car.getIn {
-  top: calc(21vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(21vmin + max(18px, env(safe-area-inset-top)));
 }
 
 .gameIsStarted[data-is-touch="1"] .touch-control.fist {
-  top: calc(40vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(40vmin + max(18px, env(safe-area-inset-top)));
 }
 
 .gameIsStarted[data-is-touch="1"] .touch-control.car.getOut,
 .gameIsStarted[data-is-touch="1"] .touch-control.camera,
 .gameIsStarted[data-is-touch="1"] .touch-control.horn,
 .gameIsStarted[data-is-touch="1"] .touch-control.weapon {
-  top: calc(5vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(5vmin + max(18px, env(safe-area-inset-top)));
 }
 
 .gameIsStarted[data-is-touch="1"] .touch-control.drift {
-  top: calc(23vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(23vmin + max(18px, env(safe-area-inset-top)));
 }
 
 .gameIsStarted[data-is-touch="1"] .touch-control.radio {
-  top: calc(3vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(3vmin + max(18px, env(safe-area-inset-top)));
 }
 
 .gameIsStarted[data-is-touch="1"] .touch-control.mobile {
-  top: calc(33vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(33vmin + max(18px, env(safe-area-inset-top)));
 }
 
 .gameIsStarted[data-is-touch="1"] .touch-control.job {
-  top: calc(47vmin + max(10px, env(safe-area-inset-top)));
+  top: calc(47vmin + max(18px, env(safe-area-inset-top)));
 }
 
 /* Armed-vehicle fire buttons remain one row above W/S pedals and clear of
@@ -3777,4 +3777,20 @@ body.gameIsStarted .pwa-install-promo {
     max(0px, env(safe-area-inset-right))
     max(0px, env(safe-area-inset-bottom))
     max(0px, env(safe-area-inset-left));
+}
+
+
+/* Mobile pedal input reliability */
+.gameIsStarted[data-is-touch="1"] .touch-control.gas,
+.gameIsStarted[data-is-touch="1"] .touch-control.brake {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.cheat-quick-btn,
+.cheat-key,
+#tc-cheat-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
